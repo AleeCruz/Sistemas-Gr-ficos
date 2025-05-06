@@ -1,6 +1,10 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
+/**Aqui dentro esta todo lo relacionado a la camara, escenea, el render y 
+ * el orbits control
+ * ------------------------------------------------
+*/
 // Escena y cámara
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x330000); // Fondo rojo oscuro
@@ -20,12 +24,18 @@ const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
+// OrbitControls
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; // para un movimiento suave
+/**------------------------------------------------------------ */
+
+
+
+/*Aqui esta el codigo necesario para ingresar objetos en la escena 
+------------------------------------------------*/
 // Plano
 const planeGeometry = new THREE.PlaneGeometry(10, 10);
-const planeMaterial = new THREE.MeshBasicMaterial({
-  color: 0xf08080,
-  side: THREE.DoubleSide,
-});
+const planeMaterial = new THREE.MeshBasicMaterial({color: 0xf08080,side: THREE.DoubleSide,});
 const plane = new THREE.Mesh(planeGeometry, planeMaterial);
 plane.rotation.x = -Math.PI / 2;
 scene.add(plane);
@@ -34,9 +44,9 @@ scene.add(plane);
 const grid = new THREE.GridHelper(10, 10, 0xaa0000, 0x550000); 
 scene.add(grid);
 
-// OrbitControls
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true; // para un movimiento suave
+
+
+
 
 // Animación
 function animate() {
@@ -46,9 +56,16 @@ function animate() {
 }
 animate();
 
-// Responsivo
+
+
+
+
+
+
+/* Responsivo
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
+*/
