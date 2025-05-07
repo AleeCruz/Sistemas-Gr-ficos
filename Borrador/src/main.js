@@ -61,7 +61,7 @@ shape.lineTo(0, 0);
 
 // Opciones de extrusión (profundidad = 4)
 const extrudeSettings = {
-  depth: 1,
+  depth: 4,
   bevelEnabled: false
 };
 
