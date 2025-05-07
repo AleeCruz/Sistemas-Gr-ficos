@@ -183,13 +183,45 @@ export class SceneManager {
 		let llanta = this.llanta.clone();
 		llanta.position.set(0, 0, 0);
 		rueda.add(llanta);
-		
-		// Ubicar la rueda en el origen de la escena (opcional, ya está en (0, 0, 0))
-		rueda.position.set(0, 0, 0);
 
-		// Agregar a la escena
-		this.scene.add(rueda);
-	
+		
+		const radio = 6; // radio del círculo donde van las tuercas
+		
+		for (let a = 0; a < Math.PI * 2; a += Math.PI / 4) {
+			let tuerca = this.tuerca.clone(); // usar modelo original
+
+			tuerca.position.set(radio * Math.cos(a), radio * Math.sin(a), 3); // z fija	
+			rueda.add(tuerca);
+		}
+		
+		const ruedaIzquierda = rueda.clone();
+		ruedaIzquierda.position.set(0,0,27);
+		
+		this.eje.add(ruedaIzquierda);
+
+		const ruedaDerecha = rueda.clone();
+		ruedaDerecha.position.set(0,0,-27);
+		ruedaDerecha.rotation.x = Math.PI;
+		ruedaDerecha.rotation.z = Math.PI;
+		this.eje.add(ruedaDerecha);
+
+
+		let vehiculo = new THREE.Group();
+		
+		let chasis = this.chasis.clone();
+		chasis.position.set(0,0,0);
+		this.vehiculo.add(chasis);
+
+		let ejeTrasero = this.eje.clone();
+		ejeTrasero.position.set(20,5,0);
+		this.vehiculo.add(ejeTrasero);
+
+		let ejeDelantero = this.eje.clone();
+		ejeDelantero.position.set(-20,5,0);
+		this.vehiculo.add(ejeDelantero);
+
+
+		
 
 		// ... hasta aca
 
