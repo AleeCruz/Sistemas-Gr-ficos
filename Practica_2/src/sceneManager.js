@@ -173,40 +173,83 @@ export class SceneManager {
 		// para clonarlos hacer: let tuerca=this.tuerca.clone(); 
 
 		// completar a partir de aca ...
+	
+		this.scene.remove(this.tuerca);
+		this.scene.remove(this.llanta);
+		this.scene.remove(this.cubierta);
+		
+
+
+
+
+// Ensamblaje de la rueda (llanta, cubierta ,tuercas)
 		let rueda = new THREE.Group();
 
-		// Clonar cubierta y llanta
+		// Cubierta y llanta en el centro de la rueda
 		let cubierta = this.cubierta.clone();
 		cubierta.position.set(0, 0, 0);
 		rueda.add(cubierta);
-		
+
 		let llanta = this.llanta.clone();
 		llanta.position.set(0, 0, 0);
 		rueda.add(llanta);
-
 		
 		const radio = 6; // radio del círculo donde van las tuercas
 		
 		for (let a = 0; a < Math.PI * 2; a += Math.PI / 4) {
 			let tuerca = this.tuerca.clone(); // usar modelo original
-
+		
 			tuerca.position.set(radio * Math.cos(a), radio * Math.sin(a), 3); // z fija	
 			rueda.add(tuerca);
 		}
 		
-		const ruedaIzquierda = rueda.clone();
-		ruedaIzquierda.position.set(0,0,27);
-		
-		this.eje.add(ruedaIzquierda);
 
-		const ruedaDerecha = rueda.clone();
+		let ruedaIzquierda = rueda.clone();
+		ruedaIzquierda.position.set(0,0,27);
+		this.eje.add(ruedaIzquierda);
+		this.ruedaIzquierda = ruedaIzquierda;
+		
+		let ruedaDerecha = rueda.clone();
 		ruedaDerecha.position.set(0,0,-27);
 		ruedaDerecha.rotation.x = Math.PI;
 		ruedaDerecha.rotation.z = Math.PI;
 		this.eje.add(ruedaDerecha);
+		this.ruedaDerecha = ruedaDerecha;
+		
+				
 
+		//------Ensamblaje de la parte   superior 
+		//chasis,brazo,antebrazo y la pala .
 
 		let vehiculo = new THREE.Group();
+
+		this.chasis.position.set(0,0,0);
+		this.vehiculo.add(this.chasis);
+
+		this.cabina.position.set(0,25,0);
+		this.vehiculo.add(this.cabina);
+
+		this.brazo.position.set(20,20,-10);
+		this.cabina.add(this.brazo);
+
+		this.antebrazo.position.set(-102,0,0);
+		this.brazo.add(this.antebrazo);
+		
+		this.pala.position.set(-60,0,0);
+		this.antebrazo.add(this.pala);
+
+		
+		//Ensamblaje del eje con respecto al vehiculo 
+		
+		this.eje.position.set(20,5,0);
+		this.vehiculo.add(this.eje);
+	
+		let ejeDelantero = this.eje.clone();
+		ejeDelantero.position.set(-20,5,0);
+		this.vehiculo.add(ejeDelantero);
+		
+
+		/*let vehiculo = new THREE.Group();
 		
 		let chasis = this.chasis.clone();
 		chasis.position.set(0,0,0);
@@ -220,8 +263,20 @@ export class SceneManager {
 		ejeDelantero.position.set(-20,5,0);
 		this.vehiculo.add(ejeDelantero);
 
+		let cabina = this.cabina.clone();
+		cabina.position.set(0,25,0);
+		this.vehiculo.add(cabina);
 
-		
+		let brazo = this.brazo.clone();
+		brazo.position.set(20,20,-10);
+		cabina.add(brazo);
+
+		let anteBrazo = this.antebrazo.clone();
+		anteBrazo.position.set(-102,0,0);
+		brazo.add(anteBrazo);
+
+
+*/
 
 		// ... hasta aca
 
