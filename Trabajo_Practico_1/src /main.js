@@ -16,7 +16,7 @@ const camera = new THREE.PerspectiveCamera(
   0.1,
   1000
 );
-camera.position.set(0,10, 0);
+camera.position.set(0,10, -10);
 camera.lookAt(0, 0, 0);
 
 // Renderer
@@ -35,7 +35,7 @@ controls.enableDamping = true; // para un movimiento suave
 ------------------------------------------------*/
 
 //Ejes coordenados 
-const axesHelper = new THREE.AxesHelper(5); // el número define el largo de los ejes
+const axesHelper = new THREE.AxesHelper(7); // el número define el largo de los ejes
 scene.add(axesHelper);
 
 // Plano
