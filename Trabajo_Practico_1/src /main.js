@@ -16,7 +16,7 @@ const camera = new THREE.PerspectiveCamera(
   0.1,
   1000
 );
-camera.position.set(10, 10, 10);
+camera.position.set(0,10, 0);
 camera.lookAt(0, 0, 0);
 
 // Renderer
@@ -33,6 +33,11 @@ controls.enableDamping = true; // para un movimiento suave
 
 /*Aqui esta el codigo necesario para ingresar objetos en la escena 
 ------------------------------------------------*/
+
+//Ejes coordenados 
+const axesHelper = new THREE.AxesHelper(5); // el número define el largo de los ejes
+scene.add(axesHelper);
+
 // Plano
 const planeGeometry = new THREE.PlaneGeometry(10, 10);
 const planeMaterial = new THREE.MeshBasicMaterial({color: 0xf08080,side: THREE.DoubleSide,});
@@ -44,6 +49,28 @@ scene.add(plane);
 const grid = new THREE.GridHelper(10, 10, 0xaa0000, 0x550000); 
 scene.add(grid);
 
+function buildCurveCatmullRoom() {
+	const points = [
+		new THREE.Vector3(4, 0, 0),
+		new THREE.Vector3(4, 0, 3),
+    new THREE.Vector3(0, 0, 3),
+    new THREE.Vector3(-3, 0, 4),
+		new THREE.Vector3(-2, 0, 0),
+    new THREE.Vector3(-4, 0, -4),
+		new THREE.Vector3(0, 0, -4),
+    new THREE.Vector3(2, 0, -2),
+    new THREE.Vector3(4, 0, -2),
+	];
+
+	const curve = new THREE.CatmullRomCurve3(points, true , 'catmullrom', 0.5);
+	const curvePoints = curve.getPoints(50); // más puntos = curva más suave
+
+	const geometry = new THREE.BufferGeometry().setFromPoints(curvePoints);
+	const material = new THREE.LineBasicMaterial({ color: 0x0000ff });
+
+	const curveObject = new THREE.Line(geometry, material);
+	scene.add(curveObject);
+}
 
 
 
@@ -54,6 +81,8 @@ function animate() {
   controls.update(); // Necesario si enableDamping = true
   renderer.render(scene, camera);
 }
+
+buildCurveCatmullRoom();
 animate();
 
 
