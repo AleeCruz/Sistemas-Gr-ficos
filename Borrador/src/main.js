@@ -47,8 +47,37 @@ plane.rotation.x = -Math.PI / 2;
 scene.add(plane);
 
 // Grilla
-const grid = new THREE.GridHelper(10, 10, 0xaa0000, 0x550000);
+const gridSize = 10;
+const gridDivision = 10;
+const grid = new THREE.GridHelper(gridSize, gridDivision, 0xaa0000, 0x550000);
 scene.add(grid);
+
+
+
+const cubeGeometry = new THREE.BoxGeometry(0.3,0.3,0.3);
+const cubeMaterial = new THREE.MeshBasicMaterial({color: 0x87CEEB})
+
+const step  = gridSize/gridDivision;
+const offset = gridSize/2 - step/2;
+
+for (let i=0;i<gridDivision;i++){
+    for(let j=0; j<gridDivision;j++){
+        const cube  = new THREE.Mesh(cubeGeometry,cubeMaterial);
+
+        const x = -offset+i*step;
+        const z = -offset+j*step;
+        cube.position.set(x,0.2,z);
+        scene.add(cube);
+    }
+}
+
+
+
+
+
+/**A partir de aca se trabaja sobre la calle, los parametros necesarios para 
+ * simular un recorrido 
+ */
 
 function buildCurveCatmullRoom() {
     const points = [
@@ -57,35 +86,37 @@ function buildCurveCatmullRoom() {
         new THREE.Vector3(0, 0, 3),
         new THREE.Vector3(-3, 0, 4),
         new THREE.Vector3(-2, 0, 0),
-        new THREE.Vector3(-4, 0, -4),
-        new THREE.Vector3(0, 0, -4),
-        new THREE.Vector3(2, 0, -2),
-        new THREE.Vector3(4, 0, -2),
+        new THREE.Vector3(-4, 0, -3),
+        new THREE.Vector3(0, 0, -3),
+        new THREE.Vector3(1, 0, -1),
+        new THREE.Vector3(3, 0, -2),
 
     ];
 
     const curve = new THREE.CatmullRomCurve3(points, true , 'catmullrom', 1);
-    const curvePoints = curve.getPoints(300); // más puntos = curva más suave
+    const curvePoints = curve.getPoints(500); // más puntos = curva más suave
 
     const geometry = new THREE.BufferGeometry().setFromPoints(curvePoints);
     const material = new THREE.LineBasicMaterial({ color: 0x0000ff });
 
     const curveObject = new THREE.Line(geometry, material);
+    curveObject.position.y = 0.02;
     scene.add(curveObject);
 
     return curve; // Devolvemos la curva para usarla en la extrusión
 }
 
 // 1. Definir la forma 2D (un rectángulo delgado)
-const rectShape = new THREE.Shape();
-rectShape.moveTo(0, -0.25);
-rectShape.lineTo(0, -0.25);
-rectShape.lineTo(0, 0.25);
-rectShape.lineTo(0, 0.25);
-rectShape.lineTo(0, -0.25);
+const Geometry2D = new THREE.Shape();
+Geometry2D.moveTo(0, -0.25);
+Geometry2D.lineTo(0, -0.25);
+Geometry2D.lineTo(0, 0.25);
+Geometry2D.lineTo(0, 0.25);
+Geometry2D.lineTo(0, -0.25);
 
 // 2. Obtener la curva de Catmull-Rom
 const catmullRomCurve = buildCurveCatmullRoom();
+
 
 // 3. Definir la configuración de la extrusión
 const extrudeSettings = {
@@ -93,18 +124,16 @@ const extrudeSettings = {
     bevelEnabled: false,
     extrudePath: catmullRomCurve,
 };
-
 // 4. Crear la geometría de barrido
-const rectGeometry = new THREE.ExtrudeGeometry(rectShape, extrudeSettings);
-
+const geometrySuperfieStreet = new THREE.ExtrudeGeometry(Geometry2D, extrudeSettings);
 // 5. Crear un material para la superficie de barrido
-const rectMaterial = new THREE.MeshStandardMaterial({ color: 0xff8c00, wireframe: true });
-
+const materialSuperficieStreet = new THREE.MeshStandardMaterial({ color: 0x696969, wireframe: false });
 // 6. Crear la malla de la superficie de barrido
-const extrudedRect = new THREE.Mesh(rectGeometry, rectMaterial);
-scene.add(extrudedRect);
+const mallaSuperficie = new THREE.Mesh(geometrySuperfieStreet, materialSuperficieStreet);
+mallaSuperficie.position.y =0.02;
+scene.add(mallaSuperficie);
 
-// --- Luces ---
+// ------------------ Luces --------------------------------------------------
 const ambientLight = new THREE.AmbientLight(0x404040);
 scene.add(ambientLight);
 
@@ -113,8 +142,8 @@ directionalLight.position.set(5, 5, 5);
 scene.add(directionalLight);
 
 // Opcional: Ayudante para visualizar la dirección de la luz direccional
-// const directionalLightHelper = new THREE.DirectionalLightHelper(directionalLight, 1);
-// scene.add(directionalLightHelper);
+const directionalLightHelper = new THREE.DirectionalLightHelper(directionalLight, 1);
+ scene.add(directionalLightHelper);
 // --- Fin de Luces ---
 
 // Animación
