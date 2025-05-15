@@ -52,6 +52,52 @@
 
         */
 
+        //Hablemos sobre las constantes
+        //-------------------Todo lo que hagamos a parti de ahora solo funciona para 
+        //las primitivas
+
+        const PI = 3.1416;
+        //const NUEVE; javascript no te permite tener constantes vacias 
+        console.log(PI);
+        //PI = 3.14; no se puede reasignar el valor de una constante
+
+
+        //¡Que sucede con las variabels let y var ??
+        //Esta permitido tener variables vacias
+        let variableVacia ;
+        variableVacia = "Estoy repasando conceptos y aprendiendo javascript";
+        console.log(variableVacia);
+
+        /*Todo lo que hagamos ahora estara funcionando para las compuestas */
+
+        const persona = {
+            nombre: "Alexander",
+            edad: 25,
+            profesion: "Estudiante de Ingenieria",
+        }
+
+        const colores = ["Rojo","verde","azul"];
+
+        console.log(persona);
+        console.log(colores);
+
+        //hasta aca no deberia haber ningun problema con respecto a la variables constantes
+        //pero si intentamos agregar un atributo a la constante persona u un elemento al array colores
+        //Funcionaran perfecetamente
+        
+        console.log("***************Agregando un atributo a la constante persona*****************");
+        console.log("***************Agregando un elemento al array colores*****************");
+
+
+        persona.correo = "acruz@fi.uba.ar"
+        colores.push("amarillo");
+
+        console.log(persona);
+        console.log(colores);
+
+
+
+
     </script>
 </body>
 </html>
