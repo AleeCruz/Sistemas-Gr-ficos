@@ -7,7 +7,8 @@ import { createStar } from './estrella.js';
 import { crearRectangulo } from './rectangulo.js';
 import { crearCilindroVertical } from './cilindro.js';
 import {crearElipse_1} from './elipse.js';
-import { crearCuadradoVertical } from './cuadradoRotativo.js';
+import { crearCuadradoBarridoGirando } from './cuadradoRotativo.js';
+import {crearHexagonoEscaladoBarrido} from "./rectanguloRotativo.js"
 
 
 
@@ -29,13 +30,11 @@ export function isInsideStreetArea(x, z, curve, streetWidth, samples = 100) {
 
 const tiposDeObjetos = {
   elipse_2: crearElipse_2,
-  cubo: crearCubo,
-  esfera: crearEsfera,
-  triangulo: createStar,
   rectangulo: crearRectangulo,
   cilindro: crearCilindroVertical,
   elipse_1: crearElipse_1,
-  cuadrado: crearCuadradoVertical,
+  cuadrado: crearCuadradoBarridoGirando,
+  rectangulo: crearHexagonoEscaladoBarrido
 };
 
 export function generarObjetosSinSuperposicion({

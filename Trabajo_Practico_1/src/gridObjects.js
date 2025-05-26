@@ -4,6 +4,8 @@ import {crearCilindroVertical} from './cilindro.js';
 import {crearCuadradoVertical} from "./cuadradoVertical.js";
 import {crearElipse_1} from "./elipse_1.js";
 import {crearElipse_2} from "./elipse_2.js";
+import {crearRectanguloBarridoGirando} from "./RectanguloRotativo.js";
+import { crearHexagonoEscaladoBarrido } from './hexagonoEscalado.js'; 
 
 
 export function isInsideStreetArea(x, z, curve, streetWidth, samples = 100) {
@@ -27,6 +29,8 @@ const tiposDeObjetos = {
   cuadrado: crearCuadradoVertical,
   elipse1: crearElipse_1,
   elipse2: crearElipse_2,
+  rectangulo: crearRectanguloBarridoGirando,
+  hexagono: crearHexagonoEscaladoBarrido,
 };
 
 export function generarObjetosSinSuperposicion({

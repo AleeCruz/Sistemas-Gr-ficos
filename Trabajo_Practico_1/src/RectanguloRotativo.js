@@ -1,27 +1,27 @@
-// twistedSquare.js
 import * as THREE from 'three';
 
 /**
- * Crea una figura cuadrada que asciende en Y mientras rota sobre su eje.
+ * Crea una figura rectangular que asciende en Y mientras rota sobre su eje.
  * Se genera una superficie de barrido (sweep surface) con tapas inferior y superior.
-
  */
-export function crearCuadradoBarridoGirando(
-  lado = 0.6,
+export function crearRectanguloBarridoGirando(
+  ladoX = 0.4,         // lado en X (ancho)
+  ladoZ = 0.8,         // lado en Z (profundidad)
   altura = 2.35,
   pasos = 76,
-  rotacionTotalRad = 3*(Math.PI)/4,
-  color = 0x008080
+  rotacionTotalRad =  (Math.PI) / 2,
+  color = 0xADFF2F
 ) {
   const geometry = new THREE.BufferGeometry();
-  const half = lado / 2;
+  const halfX = ladoX / 2;
+  const halfZ = ladoZ / 2;
 
-  // Cuadrado base centrado en (0, 0, 0), en plano XZ
-  const square = [
-    new THREE.Vector3(-half, -0.35, -half),
-    new THREE.Vector3(half, -0.35, -half),
-    new THREE.Vector3(half, -0.35, half),
-    new THREE.Vector3(-half, -0.35, half),
+  // Rectángulo base centrado en (0, 0, 0), en plano XZ
+  const rectangle = [
+    new THREE.Vector3(-halfX, -0.35, -halfZ),
+    new THREE.Vector3(halfX, -0.35, -halfZ),
+    new THREE.Vector3(halfX, -0.35, halfZ),
+    new THREE.Vector3(-halfX, -0.35, halfZ),
   ];
 
   const positions = [];
@@ -40,7 +40,7 @@ export function crearCuadradoBarridoGirando(
     const transform = new THREE.Matrix4().multiplyMatrices(translation, rotation);
 
     for (let v = 0; v < 4; v++) {
-      const p = square[v].clone().applyMatrix4(transform);
+      const p = rectangle[v].clone().applyMatrix4(transform);
       positions.push(p.x, p.y, p.z);
       if (i === 0) bottomVerts.push(p.clone());
       if (i === pasos - 1) topVerts.push(p.clone());

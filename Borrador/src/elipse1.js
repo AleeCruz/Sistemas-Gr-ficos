@@ -16,7 +16,7 @@ export function crearElipse_2(
     radiusY = 0.28,
     altura = 2,
     heightSegments = 30,
-    color = 0xDAA520
+    color = 0x7FFFD4
 ) {
     // 1. Crear la forma 2D de la Elipse
     const ellipseShape = new THREE.Shape();
