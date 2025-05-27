@@ -13,6 +13,7 @@ import {crearRectanguloBarridoGirandoParametrico} from "./rectanguloRotParam.js"
 import {crearHexagonoEscaladoBarrido } from './hexagonoEscalado.js'; 
 import {crearHexagonoEscaladoBarridoParametrico} from './hexagonoParametrico.js';
 import {crearElipseBarridoGirandoParametrico} from "./elipseRotParam.js"
+import {crearVacio} from "./vacio.js"
 
 
 
@@ -29,7 +30,7 @@ export function isInsideStreetArea(x, z, curve, streetWidth, samples = 100) {
   }
 
   const distance = Math.sqrt(minDistanceSq);
-  return distance < 0.6;
+  return distance < 0.7;
 }
 
 
@@ -47,6 +48,7 @@ const tiposDeObjetos = {
   hexagono: crearHexagonoEscaladoBarrido,
   hexagono_1: crearHexagonoEscaladoBarridoParametrico,
   elipseRotParm: crearElipseBarridoGirandoParametrico,
+  vacio: crearVacio,
 };
 
 export function generarObjetosSinSuperposicion({

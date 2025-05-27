@@ -18,7 +18,7 @@ function crearCalleConParametricGeometry() {
 
   const curva = new THREE.CatmullRomCurve3(pathPoints, true, 'catmullrom', 1);
 
-  const ancho = 0.5;
+  const ancho = 0.7;
   const superficieParametrica = (u, v, target) => {
     const p = curva.getPointAt(u);
     const tangente = curva.getTangentAt(u);

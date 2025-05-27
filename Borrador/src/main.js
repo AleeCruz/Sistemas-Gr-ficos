@@ -6,8 +6,8 @@ import { generarObjetosSinSuperposicion } from './gridObjects.js';
 generarObjetosSinSuperposicion({
     curve: catmullRomCurve,
     streetWidth: 0.5,
-    gridSize: 10,
-    gridDivision: 10,
+    gridSize: 15,
+    gridDivision: 15,
 });
 
 // --- LUCES ---
