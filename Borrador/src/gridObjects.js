@@ -1,14 +1,18 @@
 import * as THREE from 'three';
 import { scene } from './scene.js';
-import {crearElipse_2} from './elipse1.js';
-import { crearCubo } from './cubo.js';
-import { crearEsfera } from './esfera.js';
-import { createStar } from './estrella.js';
-import { crearRectangulo } from './rectangulo.js';
-import { crearCilindroVertical } from './cilindro.js';
-import {crearElipse_1} from './elipse.js';
-import { crearCuadradoBarridoGirando } from './cuadradoRotativo.js';
-import {crearHexagonoEscaladoBarrido} from "./rectanguloRotativo.js"
+import {crearCilindroVertical_1} from "./cilindroParametric.js";
+import {crearCilindroVertical} from './cilindro.js';
+import {crearCuadradoBarridoGirando} from "./cuadradoRotativo.js";
+import {crearCuadradoBarridoGirandoParametrico} from "./cuadradoRotParam.js";
+import {crearElipse_1} from "./elipse_1.js";
+import {crearElipse_Parametric} from "./elipse_1_1.js"
+import {crearElipse_2} from "./elipse_2.js";
+import {crearElipse_Parametric_2} from "./elipse_2_2.js"
+import {crearRectanguloBarridoGirando} from "./RectanguloRotativo.js";
+import {crearRectanguloBarridoGirandoParametrico} from "./rectanguloRotParam.js"
+import {crearHexagonoEscaladoBarrido } from './hexagonoEscalado.js'; 
+import {crearHexagonoEscaladoBarridoParametrico} from './hexagonoParametrico.js';
+import {crearElipseBarridoGirandoParametrico} from "./elipseRotParam.js"
 
 
 
@@ -25,16 +29,24 @@ export function isInsideStreetArea(x, z, curve, streetWidth, samples = 100) {
   }
 
   const distance = Math.sqrt(minDistanceSq);
-  return distance < 0.55;
+  return distance < 0.6;
 }
 
+
 const tiposDeObjetos = {
-  elipse_2: crearElipse_2,
-  rectangulo: crearRectangulo,
   cilindro: crearCilindroVertical,
-  elipse_1: crearElipse_1,
+  cilindro_1: crearCilindroVertical_1,
   cuadrado: crearCuadradoBarridoGirando,
-  rectangulo: crearHexagonoEscaladoBarrido
+  cuadrado_1: crearCuadradoBarridoGirandoParametrico,
+  elipse1: crearElipse_1,
+  elipse_1_1: crearElipse_Parametric,
+  elipse2: crearElipse_2,
+  elipse_2_2: crearElipse_Parametric_2,
+  rectangulo: crearRectanguloBarridoGirando,
+  rectangulo_1: crearRectanguloBarridoGirandoParametrico,
+  hexagono: crearHexagonoEscaladoBarrido,
+  hexagono_1: crearHexagonoEscaladoBarridoParametrico,
+  elipseRotParm: crearElipseBarridoGirandoParametrico,
 };
 
 export function generarObjetosSinSuperposicion({

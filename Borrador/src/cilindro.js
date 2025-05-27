@@ -7,7 +7,7 @@ import * as THREE from 'three';
 
 
 export function crearCilindroVertical(
-    radius = 0.35,
+    radius = 0.33,
     altura = 2,
     heightSegments = 30,
     color = 0x87CEEB

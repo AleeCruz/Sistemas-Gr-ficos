@@ -1,65 +1,57 @@
 import * as THREE from 'three';
-import {scene} from "./scene.js";
+import { scene } from './scene.js';
+import { ParametricGeometry } from 'three/examples/jsm/geometries/ParametricGeometry.js';
 
 
+function crearCalleConParametricGeometry() {
+  const pathPoints = [
+    new THREE.Vector3(4.5, 0, 0),
+    new THREE.Vector3(3, 0, 3),
+    new THREE.Vector3(0, 0, 3.5),
+    new THREE.Vector3(-3, 0, 4),
+    new THREE.Vector3(-3.5, 0, 0),
+    new THREE.Vector3(-4, 0, -3),
+    new THREE.Vector3(0, 0, -3),
+    new THREE.Vector3(1, 0, -1),
+    new THREE.Vector3(3, 0, -2),
+  ];
 
-// --- CALLE: CURVA DE CATMULL-ROM Y EXTRUSIÓN ---
-function buildCurveCatmullRom() {
-    const points = [
-        new THREE.Vector3(4, 0, 0),
-        new THREE.Vector3(4, 0, 3),
-        new THREE.Vector3(0, 0, 3),
-        new THREE.Vector3(-3, 0, 4),
-        new THREE.Vector3(-2, 0, 0),
-        new THREE.Vector3(-4, 0, -3),
-        new THREE.Vector3(0, 0, -3),
-        new THREE.Vector3(1, 0, -1),
-        new THREE.Vector3(3, 0, -2),
-    ];
+  const curva = new THREE.CatmullRomCurve3(pathPoints, true, 'catmullrom', 1);
 
-    const curve = new THREE.CatmullRomCurve3(points, true, 'catmullrom', 1);
-    const curvePoints = curve.getPoints(500);
+  const ancho = 0.5;
+  const superficieParametrica = (u, v, target) => {
+    const p = curva.getPointAt(u);
+    const tangente = curva.getTangentAt(u);
+    const normal = new THREE.Vector3(0, 1, 0);
+    const binormal = new THREE.Vector3();
+    binormal.crossVectors(normal, tangente).normalize();
 
-    const geometry = new THREE.BufferGeometry().setFromPoints(curvePoints);
-    const material = new THREE.LineBasicMaterial({ color: 0x0000ff });
+    const desplazamiento = binormal.multiplyScalar((v - 0.5) * ancho);
+    const puntoFinal = new THREE.Vector3().copy(p).add(desplazamiento);
 
-    const curveObject = new THREE.Line(geometry, material);
-    curveObject.position.y = 0.02;
-    scene.add(curveObject);
+    target.set(puntoFinal.x, puntoFinal.y + 0.02, puntoFinal.z);
+  };
 
-    return curve;
+  const pasosU = 200;
+  const pasosV = 4;
+
+  const geometry = new ParametricGeometry(superficieParametrica, pasosU, pasosV);
+  const material = new THREE.MeshStandardMaterial({
+    color: 0x696969,
+    side: THREE.DoubleSide,
+    flatShading: true,
+    wireframe: false
+  });
+
+  const malla = new THREE.Mesh(geometry, material);
+  scene.add(malla);
+
+  return { malla, curva };
 }
 
-// 1. Forma 2D para extrusión
-const Geometry2D = new THREE.Shape();
-Geometry2D.moveTo(0, -0.25);
-Geometry2D.lineTo(0, 0.25);
-Geometry2D.lineTo(0, 0.25); // se puede simplificar, pero no afecta
-Geometry2D.lineTo(0, -0.25);
+const { malla, curva: catmullRomCurve } = crearCalleConParametricGeometry();
 
-// 2. Crear curva y extruirla
-const catmullRomCurve = buildCurveCatmullRom();
-const extrudeSettings = {
-    steps: 400,
-    bevelEnabled: false,
-    extrudePath: catmullRomCurve,
-};
-const geometrySuperfieStreet = new THREE.ExtrudeGeometry(
-    Geometry2D,
-    extrudeSettings
-);
-const materialSuperficieStreet = new THREE.MeshStandardMaterial({
-    color: 0x696969,
-    wireframe: false,
-});
-const mallaSuperficie = new THREE.Mesh(
-    geometrySuperfieStreet,
-    materialSuperficieStreet
-);
-mallaSuperficie.position.y = 0.02;
-scene.add(mallaSuperficie);
-
-
-export {Geometry2D,catmullRomCurve,extrudeSettings,
-    mallaSuperficie
+export {
+  catmullRomCurve,
+  malla as mallaSuperficie,
 };

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import {scene,camera,renderer,controls} from "./scene.js";
-import{catmullRomCurve} from "./caminoCurva.js";
+import { scene, camera, renderer, controls } from './scene.js';
+import { catmullRomCurve } from './caminoCurva.js';
 import { generarObjetosSinSuperposicion } from './gridObjects.js';
 
 generarObjetosSinSuperposicion({
@@ -8,8 +8,7 @@ generarObjetosSinSuperposicion({
     streetWidth: 0.5,
     gridSize: 10,
     gridDivision: 10,
-  });
-
+});
 
 // --- LUCES ---
 const ambientLight = new THREE.AmbientLight(0x404040);
