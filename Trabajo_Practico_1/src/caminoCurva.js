@@ -6,11 +6,11 @@ import {scene} from "./scene.js";
 // --- CALLE: CURVA DE CATMULL-ROM Y EXTRUSIÓN ---
 function buildCurveCatmullRom() {
     const points = [
-        new THREE.Vector3(4, 0, 0),
-        new THREE.Vector3(4, 0, 3),
-        new THREE.Vector3(0, 0, 3),
+        new THREE.Vector3(4.5, 0, 0),
+        new THREE.Vector3(3, 0, 3),
+        new THREE.Vector3(0, 0, 3.5),
         new THREE.Vector3(-3, 0, 4),
-        new THREE.Vector3(-2, 0, 0),
+        new THREE.Vector3(-3.5, 0, 0),
         new THREE.Vector3(-4, 0, -3),
         new THREE.Vector3(0, 0, -3),
         new THREE.Vector3(1, 0, -1),

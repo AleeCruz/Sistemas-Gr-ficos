@@ -6,10 +6,10 @@ import * as THREE from 'three';
  * Incluye tapas superior e inferior.
  */
 export function crearHexagonoEscaladoBarrido(
-  radio = 0.5,
+  radio = 0.35,
   altura = 2.35,
   pasos = 60,
-  escalaMaxima = 0.8,
+  escalaMaxima = 0.68,
   color = 0xff0000
 ) {
   const geometry = new THREE.BufferGeometry();
