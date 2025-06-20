@@ -9,9 +9,9 @@ import {
   TOUCH,
   Vector2,
   Vector3
-} from "./chunk-TDYYZF5M.js";
+} from "./chunk-G7DZY5DB.js";
 
-// node_modules/three/examples/jsm/controls/OrbitControls.js
+// Borrador/node_modules/three/examples/jsm/controls/OrbitControls.js
 var _changeEvent = { type: "change" };
 var _startEvent = { type: "start" };
 var _endEvent = { type: "end" };
@@ -850,8 +850,7 @@ function interceptControlUp(event) {
     document.removeEventListener("keyup", this._interceptControlUp, { passive: true, capture: true });
   }
 }
-
 export {
   OrbitControls
 };
-//# sourceMappingURL=chunk-RUJQRTGM.js.map
+//# sourceMappingURL=three_examples_jsm_controls_OrbitControls.js.map

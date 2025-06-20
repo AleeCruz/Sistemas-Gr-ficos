@@ -2,9 +2,9 @@ import {
   BufferGeometry,
   Float32BufferAttribute,
   Vector3
-} from "./chunk-5NETS6H4.js";
+} from "./chunk-G7DZY5DB.js";
 
-// node_modules/three/examples/jsm/geometries/ParametricGeometry.js
+// Borrador/node_modules/three/examples/jsm/geometries/ParametricGeometry.js
 var ParametricGeometry = class extends BufferGeometry {
   /**
    * Constructs a new parametric geometry.
