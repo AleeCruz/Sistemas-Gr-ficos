@@ -6,12 +6,12 @@ import { ParametricGeometry } from 'three/examples/jsm/geometries/ParametricGeom
 function crearCalleConParametricGeometry() {
   const pathPoints = [
     new THREE.Vector3(4.5, 0, 0),
-    new THREE.Vector3(3, 0, 3),
-    new THREE.Vector3(0, 0, 3.5),
-    new THREE.Vector3(-3, 0, 4),
-    new THREE.Vector3(-3.5, 0, 0),
-    new THREE.Vector3(-4, 0, -3),
-    new THREE.Vector3(0, 0, -3),
+    new THREE.Vector3(4.5, 0, 5),
+    new THREE.Vector3(0, 0, 5),
+    new THREE.Vector3(-4, 0, 5),
+    new THREE.Vector3(-5, 0, 0),
+    new THREE.Vector3(-5, 0, -5),
+    new THREE.Vector3(0, 0, -5),
     new THREE.Vector3(1, 0, -1),
     new THREE.Vector3(3, 0, -2),
   ];
