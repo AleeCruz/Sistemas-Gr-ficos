@@ -1,135 +1,156 @@
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { PhysicsSimulator } from './simulador_fisico.js';
+import Stats from 'three/addons/libs/stats.module.js';
 
-let scene, renderer, clock;
-let objeto, curva;
-let cameraPersp, cameraOrtho, cameraPrimera, activeCamera;
-let orbitControls, pointerControls;
-let camaraActual = 0;
+// 🔁 Elegí el modelo que quieras usar:
+import { crearCubo } from './modelos/cubo.js';
+import { crearAutoPequeño } from './modelos/crearAutoPequeño.js';
 
-init();
-animate();
+// import { crearMoto } from './modelos/moto.js';
+// import { crearFerrari } from './modelos/ferrari.js';
 
-function init() {
-  const width = window.innerWidth;
-  const height = window.innerHeight;
-  const aspect = width / height;
+let camera, scene, renderer, stats;
+let controls;
+let physicsSimulator;
+let chassis;
+let wheels = [];
 
-  // Escena y render
-  scene = new THREE.Scene();
-  renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setSize(width, height);
-  document.body.appendChild(renderer.domElement);
+let createVehicleVisual = crearCubo;
 
-  // Cámaras
-  cameraPersp = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
-  cameraPersp.position.set(10, 10, 10);
+async function setupThree() {
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xbfd1e5);
 
-  cameraOrtho = new THREE.OrthographicCamera(
-    (aspect * 10) / -2,
-    (aspect * 10) / 2,
-    10 / 2,
-    -10 / 2,
-    0.1,
-    1000
-  );
-  cameraOrtho.position.set(10, 10, 10);
+    camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 10000);
+    camera.position.set(30, 30, 30);
 
-  cameraPrimera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
-  cameraPrimera.position.set(0, 1.5, 0);
+    const ambient = new THREE.HemisphereLight(0x555555, 0xffffff, 2);
+    scene.add(ambient);
 
-  // Controles
-  orbitControls = new OrbitControls(cameraPersp, renderer.domElement);
-  pointerControls = new PointerLockControls(cameraPrimera, renderer.domElement);
+    const light = new THREE.DirectionalLight(0xffffff, 2);
+    light.position.set(0, 12.5, 12.5);
+    scene.add(light);
 
-  // Activar vista en primera persona al hacer click
-  document.body.addEventListener('click', () => {
-    if (activeCamera === cameraPrimera) {
-      pointerControls.lock();
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    controls = new OrbitControls(camera, renderer.domElement);
+    controls.target = new THREE.Vector3(0, 2, 0);
+    controls.update();
+
+    // Suelo con textura
+    const geometry = new THREE.PlaneGeometry(20, 20, 1, 1);
+    geometry.rotateX(-Math.PI / 2);
+    const material = new THREE.MeshPhongMaterial({ color: 0x999999 });
+
+    const ground = new THREE.Mesh(geometry, material);
+    new THREE.TextureLoader().load('maps/grid.png', function (texture) {
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(200, 200);
+        ground.material.map = texture;
+        ground.material.needsUpdate = true;
+    });
+
+    scene.add(ground);
+
+    scene.add(new THREE.AxesHelper(5));
+
+    stats = new Stats();
+    document.body.appendChild(stats.dom);
+
+    onWindowResize();
+    window.addEventListener('resize', onWindowResize, false);
+}
+
+async function initPhysics() {
+    physicsSimulator = new PhysicsSimulator();
+    await physicsSimulator.initSimulation();
+    createCarModel();
+
+    // Obstáculo cilíndrico
+    const columnaGeo = new THREE.CylinderGeometry(2, 2, 10, 16).translate(0, 5, 0);
+    const columna = new THREE.Mesh(columnaGeo, new THREE.MeshPhongMaterial({ color: '#666699' }));
+    columna.position.set(-10, 0.5, 0);
+    scene.add(columna);
+    physicsSimulator.addRigidBody(columna, 0, 0.01);
+
+    // Rampa
+    const rampaGeo = new THREE.BoxGeometry(10, 1, 20);
+    const rampa = new THREE.Mesh(rampaGeo, new THREE.MeshPhongMaterial({ color: 0x999999 }));
+    rampa.position.set(0, 1, -30);
+    rampa.rotation.x = Math.PI / 12;
+    scene.add(rampa);
+    physicsSimulator.addRigidBody(rampa);
+}
+
+function createCarModel() {
+    // Crear chasis desde el archivo modular (como cubo.js)
+    chassis = createVehicleVisual(scene);
+
+    const axesHelper = new THREE.AxesHelper(5);
+    chassis.add(axesHelper);
+
+    // Faro delantero
+    const luz = new THREE.SpotLight(0xffdd99, 100);
+    luz.decay = 1;
+    luz.penumbra = 0.5;
+    luz.position.set(0, 0, -2);
+    luz.target.position.set(0, 0, -10);
+    chassis.add(luz.target);
+    chassis.add(luz);
+
+    // Crear ruedas
+    const ruedaGeo = new THREE.CylinderGeometry(0.3, 0.3, 0.1, 16).rotateZ(Math.PI * 0.5);
+    const ruedaMat = new THREE.MeshPhongMaterial({ color: 0x000000, wireframe: true });
+
+    for (let i = 0; i < 4; i++) {
+        const rueda = new THREE.Mesh(ruedaGeo, ruedaMat);
+        chassis.add(rueda);
+        rueda.position.set(10 * i, 2, 20 * i); // Posición temporal
+        wheels.push(rueda);
     }
-  });
+}
 
-  // Cámara activa inicial
-  activeCamera = cameraPersp;
+function updateVehicleTransforms() {
+    const vt = physicsSimulator.getVehicleTransform();
+    if (chassis && vt) {
+        chassis.position.set(vt.position.x, vt.position.y, vt.position.z);
+        chassis.quaternion.set(vt.quaternion.x, vt.quaternion.y, vt.quaternion.z, vt.quaternion.w);
 
-  // Luz
-  scene.add(new THREE.AmbientLight(0x404040));
-  const dirLight = new THREE.DirectionalLight(0xffffff, 1);
-  dirLight.position.set(10, 20, 10);
-  scene.add(dirLight);
-
-  // Cubo que circula
-  const geo = new THREE.BoxGeometry(1, 1, 1);
-  const mat = new THREE.MeshStandardMaterial({ color: 0x00ffcc });
-  objeto = new THREE.Mesh(geo, mat);
-  scene.add(objeto);
-
-  // Curva Catmull-Rom cerrada
-  const puntos = [
-    new THREE.Vector3(-8, 0, -8),
-    new THREE.Vector3(8, 0, -8),
-    new THREE.Vector3(8, 0, 8),
-    new THREE.Vector3(-8, 0, 8),
-  ];
-  curva = new THREE.CatmullRomCurve3(puntos, true);
-
-  const puntosCurva = curva.getPoints(300);
-  const curvaGeom = new THREE.BufferGeometry().setFromPoints(puntosCurva);
-  const linea = new THREE.Line(curvaGeom, new THREE.LineBasicMaterial({ color: 0xff0000 }));
-  scene.add(linea);
-
-  // Suelo
-  scene.add(new THREE.GridHelper(20, 20));
-
-  // Cambiar cámara con tecla C
-  window.addEventListener('keydown', (e) => {
-    if (e.key.toLowerCase() === 'c') {
-      camaraActual = (camaraActual + 1) % 3;
-      activeCamera = [cameraPersp, cameraOrtho, cameraPrimera][camaraActual];
-
-      orbitControls.enabled = (activeCamera === cameraPersp || activeCamera === cameraOrtho);
-      orbitControls.object = activeCamera;
-
-      if (activeCamera === cameraPrimera) {
-        pointerControls.connect();
-      } else {
-        pointerControls.disconnect();
-      }
+        wheels.forEach((rueda, i) => {
+            const wt = physicsSimulator.getWheelTransform(i);
+            if (wt) {
+                rueda.position.set(wt.position.x, wt.position.y, wt.position.z);
+                rueda.quaternion.set(wt.quaternion.x, wt.quaternion.y, wt.quaternion.z, wt.quaternion.w);
+            }
+        });
     }
-  });
+}
 
-  // Reloj
-  clock = new THREE.Clock();
+function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
 function animate() {
-  requestAnimationFrame(animate);
+    physicsSimulator.update();
+    updateVehicleTransforms();
 
-  const tiempo = clock.getElapsedTime();
-  const velocidad = 0.05;
-  const t = (tiempo * velocidad) % 1;
+    if (controls) controls.update();
 
-  // Movimiento del objeto
-  const posicion = curva.getPointAt(t);
-  const tangente = curva.getTangentAt(t).normalize();
-  objeto.position.copy(posicion);
-
-  // Rotación suave del objeto (opcional)
-  const ejeY = new THREE.Vector3(0, 1, 0);
-  const angulo = -Math.atan2(tangente.z, tangente.x);
-  const qObjetivo = new THREE.Quaternion().setFromAxisAngle(ejeY, angulo);
-  objeto.quaternion.slerp(qObjetivo, 0.1);
-
-  // Si estamos en primera persona, mover la cámara a la posición del objeto
-  if (activeCamera === cameraPrimera) {
-    const offsetAltura = new THREE.Vector3(0, 1.5, 0);
-    cameraPrimera.position.copy(objeto.position.clone().add(offsetAltura));
-  }
-
-  if (orbitControls.enabled) {
-    orbitControls.update();
-  }
-
-  renderer.render(scene, activeCamera);
+    renderer.render(scene, camera);
+    stats.update();
 }
+
+function start() {
+    setupThree();
+    initPhysics();
+    renderer.setAnimationLoop(animate);
+}
+
+start();
