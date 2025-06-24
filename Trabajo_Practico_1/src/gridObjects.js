@@ -1,19 +1,19 @@
 import * as THREE from 'three';
 import { scene } from './scene.js';
-import {crearCilindroVertical_1} from "./cilindroParametric.js";
-import {crearCilindroVertical} from './cilindro.js';
-import {crearCuadradoBarridoGirando} from "./cuadradoRotativo.js";
-import {crearCuadradoBarridoGirandoParametrico} from "./cuadradoRotParam.js";
-import {crearElipse_1} from "./elipse_1.js";
-import {crearElipse_Parametric} from "./elipse_1_1.js"
-import {crearElipse_2} from "./elipse_2.js";
-import {crearElipse_Parametric_2} from "./elipse_2_2.js"
-import {crearRectanguloBarridoGirando} from "./RectanguloRotativo.js";
-import {crearRectanguloBarridoGirandoParametrico} from "./rectanguloRotParam.js"
-import {crearHexagonoEscaladoBarrido } from './hexagonoEscalado.js'; 
-import {crearHexagonoEscaladoBarridoParametrico} from './hexagonoParametrico.js';
-import {crearElipseBarridoGirandoParametrico} from "./elipseRotParam.js"
-import {crearVacio} from "./vacio.js"
+import {crearCilindroVertical_1} from "./ObjectsCity/cilindroParametric.js";
+import {crearCilindroVertical} from './ObjectsCity/cilindro.js';
+import {crearCuadradoBarridoGirando} from "./ObjectsCity/cuadradoRotativo.js";
+import {crearCuadradoBarridoGirandoParametrico} from "./ObjectsCity/cuadradoRotParam.js";
+import {crearElipse_1} from "./ObjectsCity/elipse_1.js";
+import {crearElipse_Parametric} from "./ObjectsCity/elipse_1_1.js"
+import {crearElipse_2} from "./ObjectsCity/elipse_2.js";
+import {crearElipse_Parametric_2} from "./ObjectsCity/elipse_2_2.js"
+import {crearRectanguloBarridoGirando} from "./ObjectsCity/RectanguloRotativo.js";
+import {crearRectanguloBarridoGirandoParametrico} from "./ObjectsCity/rectanguloRotParam.js"
+import {crearHexagonoEscaladoBarrido } from './ObjectsCity/hexagonoEscalado.js'; 
+import {crearHexagonoEscaladoBarridoParametrico} from './ObjectsCity/hexagonoParametrico.js';
+import {crearElipseBarridoGirandoParametrico} from "./ObjectsCity/elipseRotParam.js"
+import {crearVacio} from "./ObjectsCity/vacio.js"
 
 
 
