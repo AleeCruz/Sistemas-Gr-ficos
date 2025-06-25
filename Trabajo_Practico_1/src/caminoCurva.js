@@ -1,22 +1,13 @@
 import * as THREE from 'three';
 import { scene } from './scene.js';
 import { ParametricGeometry } from 'three/examples/jsm/geometries/ParametricGeometry.js';
+import { crearCurva } from './curva.js'; // Importa la función crearCurva desde curva.js
 
 
 function crearCalleConParametricGeometry() {
-  const pathPoints = [
-    new THREE.Vector3(4.5, 0, 0),
-    new THREE.Vector3(3, 0, 3),
-    new THREE.Vector3(0, 0, 3.5),
-    new THREE.Vector3(-3, 0, 4),
-    new THREE.Vector3(-3.5, 0, 0),
-    new THREE.Vector3(-4, 0, -3),
-    new THREE.Vector3(0, 0, -3),
-    new THREE.Vector3(1, 0, -1),
-    new THREE.Vector3(3, 0, -2),
-  ];
+  
 
-  const curva = new THREE.CatmullRomCurve3(pathPoints, true, 'catmullrom', 1);
+  const curva = crearCurva();
 
   const ancho = 0.7;
   const superficieParametrica = (u, v, target) => {
