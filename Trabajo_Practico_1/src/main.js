@@ -52,7 +52,7 @@ function animate() {
         moverCuboSobreCurva(auto, curva, tiempo);
         // Rotar las ruedas del auto
         auto.userData.ruedas.forEach(rueda => {
-            rueda.rotation.y += 0.1; // Ajusta la velocidad de rotación según sea necesario
+            rueda.rotation.y += 0.3; // Ajusta la velocidad de rotación según sea necesario
         });
     }
 

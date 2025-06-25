@@ -1,11 +1,5 @@
 import * as THREE from 'three';
 
-/**
- * Crea un modelo de automóvil más pequeño, adecuado para una grilla de 10x10.
- * Las ruedas se configuran para poder rotar individualmente.
- *
- * @returns {THREE.Group} Un grupo THREE.Group que contiene el auto completo.
- */
 export function crearAuto() {
   const auto = new THREE.Group();
 
