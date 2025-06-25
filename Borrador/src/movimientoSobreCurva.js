@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 export function moverCuboSobreCurva(cubo, curva, tiempoTotal) {
-  const velocidad = 0.05;
+  const velocidad = 0.02;
   const t = (tiempoTotal * velocidad) % 1;
 
   const posicion = curva.getPointAt(t);

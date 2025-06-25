@@ -1,40 +1,74 @@
 import * as THREE from 'three';
-import { scene, camera, renderer, controls } from './scene.js';
-import { catmullRomCurve } from './caminoCurva.js';
-import { generarObjetosSinSuperposicion } from './gridObjects.js';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import { crearCurva } from './curva.js';
 
-generarObjetosSinSuperposicion({
-    curve: catmullRomCurve,
-    streetWidth: 0.5,
-    gridSize: 15,
-    gridDivision: 15,
-});
+import { moverCuboSobreCurva } from './movimientoSobreCurva.js';
+import { crearAuto } from './auto.js';
+import { cargarAuto } from './cargarAuto.js';
 
-// --- LUCES ---
-const ambientLight = new THREE.AmbientLight(0x404040);
-scene.add(ambientLight);
 
-const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-directionalLight.position.set(5, 5, 5);
-scene.add(directionalLight);
 
-const directionalLightHelper = new THREE.DirectionalLightHelper(
-    directionalLight,
-    1
-);
-scene.add(directionalLightHelper);
 
-// --- ANIMACIÓN Y RENDER ---
-function animate() {
-    requestAnimationFrame(animate);
-    controls.update();
-    renderer.render(scene, camera);
-}
+//Vamos a importar un auto de "Ignition Labs"
+
+let scene, camera, renderer, curva, cubo, clock, auto;
+
+init();
 animate();
 
-// --- RESPONSIVE ---
-window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-});
+function init() {
+  scene = new THREE.Scene();
+
+  camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera.position.set(0, 20, 30);
+
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
+
+  new OrbitControls(camera, renderer.domElement);
+
+  const luz = new THREE.DirectionalLight(0xffffff, 1);
+  luz.position.set(10, 20, 10);
+  scene.add(luz, new THREE.AmbientLight(0x404040));
+
+  curva = crearCurva();
+
+  const puntos = curva.getPoints(200);
+  const curvaGeometry = new THREE.BufferGeometry().setFromPoints(puntos);
+  const curvaLine = new THREE.Line(curvaGeometry, new THREE.LineBasicMaterial({ color: 0xff0000 }));
+  scene.add(curvaLine);
+
+
+/*
+  // Cargar modelo GLB desde Ignition Labs
+    cargarAuto('/modelos/car_model.glb', (modelo) => {
+    auto = modelo; // Guardamos el modelo para moverlo en animate()
+    scene.add(auto);
+    auto.position.set(0, 0, 0);
+    
+    });
+*/
+
+
+  auto = crearAuto();
+  scene.add(auto);
+
+  scene.add(new THREE.GridHelper(20, 20));
+
+  clock = new THREE.Clock();
+}
+
+
+function animate() {
+  requestAnimationFrame(animate);
+
+  const tiempo = clock.getElapsedTime();
+
+ if (auto && curva) {
+  moverCuboSobreCurva(auto, curva, tiempo);
+}
+
+
+  renderer.render(scene, camera);
+}
