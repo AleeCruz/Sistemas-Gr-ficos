@@ -4,16 +4,16 @@ import { PhysicsSimulator } from './PhysicsSimulator.js';
 import Stats from 'three/addons/libs/stats.module.js';
 
 let camera, scene, renderer, stats;
-let orbitControls; // Renombrado para mayor claridad
+let orbitControls;
 let physicsSimulator;
 let chassis;
 let wheels = [];
 
 // --- Variables de estado de la cámara ---
-let currentActiveCamera; // La cámara actualmente activa (para el renderizado)
-let orbitCamera;         // La cámara inicial de órbita
-let firstPersonCamera;   // La cámara en primera persona
-let thirdPersonCamera;   // La cámara en tercera persona
+let currentActiveCamera;
+let orbitCamera;
+let firstPersonCamera;
+let thirdPersonCamera;
 let activeCameraType = 'orbit'; // 'orbit', 'firstPerson', 'thirdPerson'
 
 async function setupThree() {
@@ -22,7 +22,7 @@ async function setupThree() {
 
     // Cámara de órbita (la principal que usaremos al inicio)
     orbitCamera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 10000);
-    orbitCamera.position.set(20, 20, 20);
+    orbitCamera.position.set(8, 8, 8); // Ajusta la posición inicial para el coche mucho más pequeño
 
     // Cámara en primera persona
     firstPersonCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -45,12 +45,12 @@ async function setupThree() {
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
-    
+
     document.body.appendChild(renderer.domElement);
-    
+
     // Controles de órbita asociados a la cámara de órbita
     orbitControls = new OrbitControls(orbitCamera, renderer.domElement);
-    orbitControls.target.set(0, 2, 0); // Apunta a una posición inicial razonable
+    orbitControls.target.set(0, 0.5, 0); // Apunta a una posición inicial razonable para un coche mucho más pequeño
     orbitControls.update();
 
     const geometry = new THREE.PlaneGeometry(1000, 1000, 1, 1);
@@ -59,17 +59,17 @@ async function setupThree() {
 
     const ground = new THREE.Mesh(geometry, material);
 
-    new THREE.TextureLoader().load( 'maps/grid.png', function ( texture ) {
+    new THREE.TextureLoader().load('maps/grid.png', function (texture) {
         texture.wrapS = THREE.RepeatWrapping;
         texture.wrapT = THREE.RepeatWrapping;
-        texture.repeat.set( 200, 200 );
+        texture.repeat.set(200, 200);
         ground.material.map = texture;
         ground.material.needsUpdate = true;
-    } );
-    
+    });
+
     scene.add(ground);
 
-    let axesHelper = new THREE.AxesHelper(5);
+    let axesHelper = new THREE.AxesHelper(3);
     scene.add(axesHelper);
 
     stats = new Stats();
@@ -87,23 +87,23 @@ async function initPhysics() {
     createCarModel();
 
     // cylinder obstacle
-    const geometry = new THREE.CylinderGeometry(2, 2, 10, 16);
-    geometry.translate(0, 5, 0);
-    const material = new THREE.MeshPhongMaterial({color:'#666699'} );
+    const geometry = new THREE.CylinderGeometry(0.5, 0.5, 2.5, 16); // Mucho más pequeño
+    geometry.translate(0, 1.25, 0);
+    const material = new THREE.MeshPhongMaterial({ color: '#666699' });
     const column = new THREE.Mesh(geometry, material);
-    column.position.set(-10, 0.5, 0);
+    column.position.set(-5, 0.1, 0); // Ajusta la posición si el suelo está más bajo
 
     scene.add(column);
     physicsSimulator.addRigidBody(column, 0, 0.01);
-    
+
     // ramp obstacle (should be a BoxGeometry)
-    const rampGeometry = new THREE.BoxGeometry(10, 1, 20);    
+    const rampGeometry = new THREE.BoxGeometry(5, 0.4, 10); // Mucho más pequeña
     const rampMaterial = new THREE.MeshPhongMaterial({ color: 0x999999 });
-    const ramp = new THREE.Mesh(rampGeometry, rampMaterial );
-    ramp.position.set(0, 1, -30 );
+    const ramp = new THREE.Mesh(rampGeometry, rampMaterial);
+    ramp.position.set(0, 0.3, -10); // Ajusta la posición y altura
     ramp.rotation.x = Math.PI / 12;
     scene.add(ramp);
-   
+
     physicsSimulator.addRigidBody(ramp);
 
     // --- Manejador de eventos de teclado para el cambio de cámara ---
@@ -137,37 +137,33 @@ async function initPhysics() {
 
 function createCarModel() {
     // chasis (cuerpo visual del auto)
-    const geometry = new THREE.BoxGeometry(2, 1, 4);
+    // MUCHO MÁS REDUCIDO: Ancho, Alto, Profundidad
+    const geometry = new THREE.BoxGeometry(0.8, 0.35, 1.5);
     const material = new THREE.MeshPhongMaterial({ color: 0xff0000 });
-    chassis = new THREE.Mesh(geometry, material);   
+    chassis = new THREE.Mesh(geometry, material);
     scene.add(chassis);
 
     // Ejes de ayuda para el chasis
-    let axesHelper = new THREE.AxesHelper(5);
+    let axesHelper = new THREE.AxesHelper(1.5); // Tamaño del helper ajustado
     chassis.add(axesHelper);
 
     // Foco en la parte delantera del coche
-    const spotLight = new THREE.SpotLight(0xffDD99, 100);    
+    const spotLight = new THREE.SpotLight(0xffDD99, 50); // Intensidad ajustada
     spotLight.decay = 1;
     spotLight.penumbra = 0.5;
-    spotLight.position.set(0, 0, -2); // Posición relativa al chasis
-    spotLight.target.position.set(0, 0, -10); // Hacia adelante
+    spotLight.position.set(0, 0, -0.75); // Posición relativa al chasis ajustada
+    spotLight.target.position.set(0, 0, -2.5); // Hacia adelante ajustada
     chassis.add(spotLight.target);
-    chassis.add(spotLight);  
+    chassis.add(spotLight);
 
     // Ruedas (mallas visuales)
-    const wheelGeometry = new THREE.CylinderGeometry(0.6, 0.6, 0.4, 16);
+    // MUCHO MÁS REDUCIDO: Radio, Grosor
+    const wheelGeometry = new THREE.CylinderGeometry(0.2, 0.2, 0.12, 16);
     wheelGeometry.rotateZ(Math.PI * 0.5); // Rotar para que la rueda "mire" hacia afuera
     const wheelMaterial = new THREE.MeshPhongMaterial({ color: 0x000000, wireframe: true });
 
-    // En tu PhysicsSimulator, las ruedas están en:
-    // { x: -wheelSeparation / 2, y: 0, z: -axesSeparation/2 }, (front-left)
-    // { x: wheelSeparation / 2, y: 0, z: -axesSeparation/2}, (front-right)
-    // { x: -wheelSeparation / 2, y: 0, z: axesSeparation/2}, (rear-left)
-    // { x: wheelSeparation / 2, y: 0, z: axesSeparation/2}, (rear-right)
-    // Estas posiciones serán usadas para colocar las mallas visuales.
     for (let i = 0; i < 4; i++) {
-        const wheel = new THREE.Mesh(wheelGeometry, wheelMaterial);                
+        const wheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
         chassis.add(wheel); // Añadir las ruedas como hijos del chasis
         wheels.push(wheel);
     };
@@ -194,11 +190,11 @@ function updateVehicleTransforms() {
     const vehicleTransform = physicsSimulator.getVehicleTransform();
     if (chassis && vehicleTransform) {
         const { position: physicsPosition, quaternion: physicsQuaternion } = vehicleTransform;
-        
+
         // Actualizar la posición y rotación del chasis visual
         chassis.position.set(physicsPosition.x, physicsPosition.y, physicsPosition.z);
-        chassis.quaternion.set(physicsQuaternion.x, physicsQuaternion.y, physicsQuaternion.z, physicsQuaternion.w); 
-        
+        chassis.quaternion.set(physicsQuaternion.x, physicsQuaternion.y, physicsQuaternion.z, physicsQuaternion.w);
+
         // Actualizar la posición y rotación de las mallas de las ruedas
         wheels.forEach((wheelMesh, index) => {
             const wheelTransform = physicsSimulator.getWheelTransform(index);
@@ -216,15 +212,15 @@ function updateVehicleTransforms() {
         const carQuaternion = chassis.quaternion;
 
         // --- Cámara en primera persona ---
-        // Offset (0.1 arriba, 0.8 adelante) relativo al chasis, luego transformado por la rotación del coche
-        const fpOffset = new THREE.Vector3(0, 3,2); 
+        // OFFSET AJUSTADO PARA COCHE MUCHO MÁS PEQUEÑO
+        const fpOffset = new THREE.Vector3(0, 0.4, 0.75);
         fpOffset.applyQuaternion(carQuaternion);
         firstPersonCamera.position.copy(carPosition).add(fpOffset);
         firstPersonCamera.quaternion.copy(carQuaternion); // La cámara mira en la misma dirección que el coche
 
         // --- Cámara en tercera persona ---
-        // Offset (5 arriba, 10 atrás) relativo al chasis, luego transformado
-        const tpOffset = new THREE.Vector3(0, 5, 10); // Ajusta la altura y la distancia de seguimiento
+        // OFFSET AJUSTADO PARA COCHE MUCHO MÁS PEQUEÑO
+        const tpOffset = new THREE.Vector3(0, 1.5, 3);
         tpOffset.applyQuaternion(carQuaternion);
         thirdPersonCamera.position.copy(carPosition).add(tpOffset);
         thirdPersonCamera.lookAt(carPosition); // La cámara siempre mira al centro del coche
