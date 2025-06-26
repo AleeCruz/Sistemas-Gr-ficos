@@ -23,7 +23,7 @@ export class CameraManager {
         this.cameraOrtho.position.set(10, 10, 10);
 
         this.cameraPrimera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
-        this.cameraPrimera.position.set(0, 0.25, 0); // Posición inicial, será actualizada por el objeto en movimiento
+        this.cameraPrimera.position.set(0, 0.23, 0); // Posición inicial, será actualizada por el objeto en movimiento
 
         this.orbitControls = new OrbitControls(this.cameraPersp, domElement);
         this.orbitControls.enableDamping = true; // Mantén tu configuración existente de OrbitControls
@@ -93,7 +93,7 @@ export class CameraManager {
     }
 
     updatePrimeraPersonaCamera(objectPosition) {
-        const offsetAltura = new THREE.Vector3(0, 0.25, 0); // Ajuste para la altura de la cámara
+        const offsetAltura = new THREE.Vector3(0, 0.23, 0); // Ajuste para la altura de la cámara
         this.cameraPrimera.position.copy(objectPosition).add(offsetAltura);
     }
 
