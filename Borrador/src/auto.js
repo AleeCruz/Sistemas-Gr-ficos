@@ -12,24 +12,28 @@ export function crearAuto() {
   // --- Carrocería (escalada para ser más pequeña) ---
   // Dimensiones originales: 4 de largo, 1.5 de alto, 2 de ancho
   // Nuevas dimensiones: 1.2 de largo, 0.45 de alto, 0.6 de ancho (escalado ~0.3x)
-  const cuerpoGeom = new THREE.BoxGeometry(1.2, 0.45, 0.6);
-  const cuerpoMat = new THREE.MeshStandardMaterial({ color: 0x156289, metalness: 0.5, roughness: 0.6 });
+  const cuerpoGeom = new THREE.BoxGeometry(0.8, 0.3, 0.4);
+  const cuerpoMat = new THREE.MeshStandardMaterial({ color: 0x156289, metalness: 0.5, roughness: 0.6,
+    wireframe:false
+   });
   const cuerpo = new THREE.Mesh(cuerpoGeom, cuerpoMat);
-  cuerpo.position.y = 0.225; // La mitad de la altura para que el "suelo" del auto esté en y=0
+  cuerpo.position.y = 0.25; // La mitad de la altura para que el "suelo" del auto esté en y=0
   auto.add(cuerpo);
 
   // --- Ruedas (más pequeñas y preparadas para girar) ---
   // Las ruedas serán grupos individuales para poder rotarlas fácilmente.
-  const ruedaRadio = 0.15; // Radio de la rueda
-  const ruedaAncho = 0.15; // Ancho de la rueda
+  const ruedaRadio = 0.1; // Radio de la rueda
+  const ruedaAncho = 0.1; // Ancho de la rueda
   const ruedaGeom = new THREE.CylinderGeometry(ruedaRadio, ruedaRadio, ruedaAncho, 16); // Menos segmentos para optimizar
-  const ruedaMat = new THREE.MeshStandardMaterial({ color: 0x333083, metalness: 0.7, roughness: 0.5 });
+  const ruedaMat = new THREE.MeshStandardMaterial({ color: 0x333083, metalness: 0.7, roughness: 0.5,
+    wireframe: true
+   });
 
   const posicionesRuedas = [
-    [-0.45, ruedaRadio, 0.3],  // Delantera izquierda (X, Y, Z)
-    [0.45, ruedaRadio, 0.3],   // Delantera derecha
-    [-0.45, ruedaRadio, -0.3], // Trasera izquierda
-    [0.45, ruedaRadio, -0.3],  // Trasera derecha
+    [-0.3, ruedaRadio, 0.2],  // Delantera izquierda (X, Y, Z)
+    [0.3, ruedaRadio, 0.2],   // Delantera derecha
+    [-0.3, ruedaRadio, -0.2], // Trasera izquierda
+    [0.3, ruedaRadio, -0.2],  // Trasera derecha
   ];
 
   // Almacenamos las referencias a las mallas de las ruedas para poder rotarlas más tarde

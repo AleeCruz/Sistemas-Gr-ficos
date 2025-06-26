@@ -1,74 +1,94 @@
+// main.js
+
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { crearCurva } from './curva.js';
-
-import { moverCuboSobreCurva } from './movimientoSobreCurva.js';
+import { scene, camera, renderer, controls } from './scene.js'; // Importamos la cámara, el renderizador y los controles desde scene.js
+import { catmullRomCurve } from './caminoCurva.js';
+import { generarObjetosSinSuperposicion } from './gridObjects.js';
 import { crearAuto } from './auto.js';
-import { cargarAuto } from './cargarAuto.js';
+import { moverCuboSobreCurva } from './movimientoSobreCurva.js';
+import { crearCurva } from "./curva.js";
+import { CameraManager } from './cameraManager.js'; // Importamos el CameraManager
 
+generarObjetosSinSuperposicion({
+    curve: catmullRomCurve,
+    streetWidth: 0.5,
+    gridSize: 15,
+    gridDivision: 15,
+});
 
+let auto, curva, clock;
+let cameraManager; // Instancia de CameraManager
 
+// --- LUCES ---
+const ambientLight = new THREE.AmbientLight(0x404040);
+scene.add(ambientLight);
 
-//Vamos a importar un auto de "Ignition Labs"
+const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+directionalLight.position.set(5, 5, 5);
+scene.add(directionalLight);
 
-let scene, camera, renderer, curva, cubo, clock, auto;
+const directionalLightHelper = new THREE.DirectionalLightHelper(
+    directionalLight,
+    1
+);
+scene.add(directionalLightHelper);
 
-init();
+/**
+ * Se agregó un auto y se le asignó una curva para que se mueva sobre ella.
+ * El auto se mueve a lo largo de la curva y rota suavemente para seguir la dirección
+ */
+curva = crearCurva(); // Esta es la curva que usará el auto
+const puntosCurva = curva.getPoints(200);
+const curvaGeometry = new THREE.BufferGeometry().setFromPoints(puntosCurva);
+scene.add(new THREE.Line(curvaGeometry, new THREE.LineBasicMaterial({ color: 0xff0000 }))); // Opcional: visualizar la línea de la curva
+
+// NO SE CREA EL TÚNEL AQUÍ
+
+auto = crearAuto();
+scene.add(auto);
+clock = new THREE.Clock();
+
+// --- INICIALIZAR CAMERA MANAGER ---
+// Pasamos el renderer.domElement para que los controles puedan escuchar eventos
+// y la 'camera' de scene.js como la cámara inicial de perspectiva.
+cameraManager = new CameraManager(renderer.domElement, camera);
+
+// --- CAMBIAR CÁMARA CON TECLA C ---
+window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'c') {
+        cameraManager.toggleCamera();
+    }
+});
+
+// --- ANIMACIÓN Y RENDER ---
+function animate() {
+    requestAnimationFrame(animate);
+    const tiempo = clock.getElapsedTime();
+
+    if (auto && curva) {
+        moverCuboSobreCurva(auto, curva, tiempo);
+        // Rotar las ruedas del auto
+        auto.userData.ruedas.forEach(rueda => {
+            rueda.rotation.y += 0.3; // Ajusta la velocidad de rotación según sea necesario
+        });
+
+        // Si la cámara activa es la de primera persona, actualizamos su posición
+        if (cameraManager.getActiveCameraType() === 'primeraPersona') {
+            cameraManager.updatePrimeraPersonaCamera(auto.position);
+        }
+    }
+
+    // Actualizamos los controles de la cámara activa
+    cameraManager.updateControls();
+
+    // Renderizamos la escena con la cámara activa del CameraManager
+    renderer.render(scene, cameraManager.getActiveCamera());
+}
 animate();
 
-function init() {
-  scene = new THREE.Scene();
-
-  camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-  camera.position.set(0, 20, 30);
-
-  renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  document.body.appendChild(renderer.domElement);
-
-  new OrbitControls(camera, renderer.domElement);
-
-  const luz = new THREE.DirectionalLight(0xffffff, 1);
-  luz.position.set(10, 20, 10);
-  scene.add(luz, new THREE.AmbientLight(0x404040));
-
-  curva = crearCurva();
-
-  const puntos = curva.getPoints(200);
-  const curvaGeometry = new THREE.BufferGeometry().setFromPoints(puntos);
-  const curvaLine = new THREE.Line(curvaGeometry, new THREE.LineBasicMaterial({ color: 0xff0000 }));
-  scene.add(curvaLine);
-
-
-/*
-  // Cargar modelo GLB desde Ignition Labs
-    cargarAuto('/modelos/car_model.glb', (modelo) => {
-    auto = modelo; // Guardamos el modelo para moverlo en animate()
-    scene.add(auto);
-    auto.position.set(0, 0, 0);
-    
-    });
-*/
-
-
-  auto = crearAuto();
-  scene.add(auto);
-
-  scene.add(new THREE.GridHelper(20, 20));
-
-  clock = new THREE.Clock();
-}
-
-
-function animate() {
-  requestAnimationFrame(animate);
-
-  const tiempo = clock.getElapsedTime();
-
- if (auto && curva) {
-  moverCuboSobreCurva(auto, curva, tiempo);
-}
-
-
-  renderer.render(scene, camera);
-}
+// --- RESPONSIVE ---
+window.addEventListener('resize', () => {
+    // El CameraManager ahora maneja el redimensionamiento de las cámaras
+    cameraManager.onWindowResize(window.innerWidth, window.innerHeight);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
