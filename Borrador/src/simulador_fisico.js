@@ -5,8 +5,8 @@ import { min, step } from 'three/tsl';
 
 
 export const defaultVehicleParams = {
-    wheelSeparation: 1, // distance between the wheels
-    axesSeparation: 1.5, // distance between the front and rear wheels
+    wheelSeparation: 2.5, // distance between the wheels
+    axesSeparation: 3, // distance between the front and rear wheels
     wheelRadius: 0.6,
     wheelWidth: 0.4,
     suspensionRestLength: 0.8,
@@ -28,9 +28,9 @@ export const defaultVehicleParams = {
 }
 
 export const defaultGroundParams = {
-    width: 20,
+    width: 1000,
     height: 1,
-    length:20,
+    length:1000,
 }
 
 export class PhysicsSimulator {
