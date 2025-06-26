@@ -8,6 +8,9 @@ import { crearAuto } from './auto.js';
 import { moverCuboSobreCurva } from './movimientoSobreCurva.js';
 import { crearCurva } from "./curva.js";
 import { CameraManager } from './cameraManager.js'; // Importamos el CameraManager
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+
 
 generarObjetosSinSuperposicion({
     curve: catmullRomCurve,
@@ -44,8 +47,28 @@ scene.add(new THREE.Line(curvaGeometry, new THREE.LineBasicMaterial({ color: 0xf
 
 // NO SE CREA EL TÚNEL AQUÍ
 
+
+
+/*
 auto = crearAuto();
 scene.add(auto);
+*/
+const loader = new GLTFLoader();
+loader.load('/modelos/car_model.glb', (gltf) => {
+    auto = gltf.scene;
+    auto.scale.set(0.001, 0.001, 0.001); // Ajusta según sea necesario
+    scene.add(auto);
+
+    // Suponiendo que las ruedas están nombradas "wheel_fl", "wheel_fr", etc. en el GLB
+    auto.userData.ruedas = [];
+    auto.traverse((child) => {
+      child.rotation.y = Math.PI / 2; // Aseguramos que las ruedas estén orientadas correctamente
+    });
+
+}, undefined, (error) => {
+    console.error("Error al cargar el modelo GLB:", error);
+});
+
 clock = new THREE.Clock();
 
 // --- INICIALIZAR CAMERA MANAGER ---
