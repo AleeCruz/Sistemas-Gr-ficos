@@ -69,7 +69,7 @@ window.addEventListener('keydown', (e) => {
 });
 
 // --- LÁMPARAS A LO LARGO DE LA CURVA (alternando lados) ---
-const puntosLamparas = curva.getSpacedPoints(14);
+const puntosLamparas = curva.getSpacedPoints(11);
 
 puntosLamparas.forEach((pos, i) => {
     const lampara = crearLamparaCalle();
