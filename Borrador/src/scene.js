@@ -31,20 +31,38 @@ scene.add(axesHelper);
 const gridSize = 15;
 const gridDivision = 15;
 const planeGeometry = new THREE.PlaneGeometry(gridSize, gridDivision);
-const planeMaterial = new THREE.MeshBasicMaterial({
-    color: 0xf08080,
+
+// --- Cargar la textura ---
+const textureLoader = new THREE.TextureLoader();
+const planeTexture = textureLoader.load('textures/piso.jpg'); // Asegúrate de que 'piso.png' esté en la ruta correcta
+
+// *** CAMBIO CLAVE AQUÍ: Ajustamos el 'color' del material ***
+const planeMaterial = new THREE.MeshStandardMaterial({
+    map: planeTexture,      // La textura sigue siendo el mapa principal.
+    color: 0xcccccc,        // ¡Aquí cambiamos el color a un gris claro! (hexadecimal)
     side: THREE.DoubleSide,
+    roughness: 0.8,
+    metalness: 0.1
 });
+
 const plane = new THREE.Mesh(planeGeometry, planeMaterial);
 plane.rotation.x = -Math.PI / 2;
 scene.add(plane);
 
 
 const grid = new THREE.GridHelper(gridSize, gridDivision, 0xaa0000, 0x550000);
-scene.add(grid);
+//scene.add(grid);
 
+// --- AGREGAR ILUMINACIÓN A LA ESCENA ---
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+scene.add(ambientLight);
+
+const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+directionalLight.position.set(5, 10, 5);
+scene.add(directionalLight);
 
 export {
     scene,camera,renderer,controls,
     axesHelper,planeGeometry,planeMaterial,
-    plane,grid,gridSize,gridDivision};
+    plane,grid,gridSize,gridDivision
+};
