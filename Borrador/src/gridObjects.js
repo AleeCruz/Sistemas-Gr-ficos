@@ -1,15 +1,9 @@
 import * as THREE from 'three';
 import { scene } from './scene.js';
 import {crearCilindroVertical_1} from "./ObjectsCity/cilindroParametric.js";
-import {crearCilindroVertical} from './ObjectsCity/cilindro.js';
 import {crearCuadradoBarridoGirando} from "./ObjectsCity/cuadradoRotativo.js";
 import {crearCuadradoBarridoGirandoParametrico} from "./ObjectsCity/cuadradoRotParam.js";
-import {crearElipse_1} from "./ObjectsCity/elipse_1.js";
 import {crearElipse_Parametric} from "./ObjectsCity/elipse_1_1.js"
-import {crearElipse_2} from "./ObjectsCity/elipse_2.js";
-import {crearElipse_Parametric_2} from "./ObjectsCity/elipse_2_2.js"
-import {crearRectanguloBarridoGirando} from "./ObjectsCity/RectanguloRotativo.js";
-import {crearRectanguloBarridoGirandoParametrico} from "./ObjectsCity/rectanguloRotParam.js"
 import {crearHexagonoEscaladoBarrido } from './ObjectsCity/hexagonoEscalado.js'; 
 import {crearHexagonoEscaladoBarridoParametrico} from './ObjectsCity/hexagonoParametrico.js';
 import {crearElipseBarridoGirandoParametrico} from "./ObjectsCity/elipseRotParam.js"
@@ -30,22 +24,15 @@ export function isInsideStreetArea(x, z, curve, streetWidth, samples = 100) {
   }
 
   const distance = Math.sqrt(minDistanceSq);
-  return distance < 0.7;
+  return distance < 1.5;
 }
 
 
 const tiposDeObjetos = {
-  cilindro: crearCilindroVertical,
   cilindro_1: crearCilindroVertical_1,
   cuadrado: crearCuadradoBarridoGirando,
   cuadrado_1: crearCuadradoBarridoGirandoParametrico,
-  elipse1: crearElipse_1,
   elipse_1_1: crearElipse_Parametric,
-  elipse2: crearElipse_2,
-  elipse_2_2: crearElipse_Parametric_2,
-  rectangulo: crearRectanguloBarridoGirando,
-  rectangulo_1: crearRectanguloBarridoGirandoParametrico,
-  hexagono: crearHexagonoEscaladoBarrido,
   hexagono_1: crearHexagonoEscaladoBarridoParametrico,
   elipseRotParm: crearElipseBarridoGirandoParametrico,
   vacio: crearVacio,

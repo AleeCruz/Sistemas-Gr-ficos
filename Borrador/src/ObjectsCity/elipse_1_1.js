@@ -8,7 +8,7 @@ export function crearElipse_Parametric(
   segmentsU = 64,
   segmentsV = 30,
   color = 0xDAA520,
-  texturaURL = 'textures/ventana1.png',
+  texturaURL = 'textures/image.png',
   repeticionesY = 2
 ) {
   // --- Función paramétrica para el cuerpo ---
