@@ -29,12 +29,14 @@ export function isInsideStreetArea(x, z, curve, streetWidth, samples = 100) {
 
 
 const tiposDeObjetos = {
+  
   cilindro_1: crearCilindroVertical_1,
-  cuadrado: crearCuadradoBarridoGirando,
+  /*cuadrado: crearCuadradoBarridoGirando,
   cuadrado_1: crearCuadradoBarridoGirandoParametrico,
   elipse_1_1: crearElipse_Parametric,
   hexagono_1: crearHexagonoEscaladoBarridoParametrico,
   elipseRotParm: crearElipseBarridoGirandoParametrico,
+  */
   vacio: crearVacio,
 };
 
