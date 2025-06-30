@@ -92,7 +92,7 @@ export class DayNightManager {
 
         // 4. Ajustar la intensidad y posición de la luz direccional principal (sol/luna)
         // Es más brillante durante el día y más tenue por la noche
-        this.mainDirectionalLight.intensity = THREE.MathUtils.lerp(1.0, 0.1, factor);
+        this.mainDirectionalLight.intensity = THREE.MathUtils.lerp(10, 0.1, factor);
 
         // Simular el movimiento del sol/luna por el cielo
         // Usando seno/coseno para que parezca que sube y baja

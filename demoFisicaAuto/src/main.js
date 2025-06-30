@@ -20,9 +20,11 @@ async function setupThree() {
     const ambient = new THREE.HemisphereLight(0x555555, 0xffffff,2);
     scene.add(ambient);
 
+    /*
     const light = new THREE.DirectionalLight(0xffffff, 2);
     light.position.set(0, 12.5, 12.5);
     scene.add(light);
+    */
 
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(window.devicePixelRatio);

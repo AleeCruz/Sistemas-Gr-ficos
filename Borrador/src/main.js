@@ -27,9 +27,9 @@ let streetPointLights = []; // Array para recolectar las instancias de PointLigh
 // --- LUCES GLOBALES ---
 // Definir luces ambientales y direccionales globales. Serán gestionadas por DayNightManager.
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.6); // Intensidad inicial para el día
-scene.add(ambientLight);
+//scene.add(ambientLight);
 
-const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0); // Intensidad inicial para el día
+const directionalLight = new THREE.DirectionalLight(0xff0000, 0); // Intensidad inicial para el día
 directionalLight.position.set(5, 5, 5); // Posición inicial para el día (ej. sol)
 scene.add(directionalLight);
 

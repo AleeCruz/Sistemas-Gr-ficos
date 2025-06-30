@@ -72,7 +72,7 @@ export function generarObjetosSinSuperposicion({
     const tipo = tipos[tipoIndex];
     const crearObjeto = tiposDeObjetos[tipo];
 
-    const objeto = crearObjeto();
+    const objeto = crearObjeto();//usar gitclone 
     objeto.position.set(pos.x, 0.35, pos.z);
     scene.add(objeto);
 
