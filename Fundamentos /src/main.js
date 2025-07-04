@@ -15,6 +15,10 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setAnimationLoop(animate);
 document.body.appendChild(renderer.domElement);
+//----------------------------------------------------------------------
+//---------------Vamos a habilitar el uso de las sombras
+
+renderer.shadowMap.enabled = true;
 
 
 //------------------------------------------------------------------------------
@@ -45,6 +49,7 @@ const planeMaterial = new THREE.MeshStandardMaterial({ color: 0xfff000, side: TH
 const plane = new THREE.Mesh(planeGeometry,planeMaterial);
 scene.add(plane ); 
 plane.rotation.x = -Math.PI / 2; // Rotar el plano para que esté horizontal
+plane.receiveShadow = true;
 
 const gridHelper = new THREE.GridHelper(20);
 scene.add(gridHelper);
@@ -54,8 +59,9 @@ const sphereMaterial = new THREE.MeshStandardMaterial({color : 0x0000ff,
     wireframe:false
 });
 const sphere = new THREE.Mesh(sphereGeometry,sphereMaterial);
-sphere.position.set(-10,10,0);
+sphere.position.set(-5,5,0);
 scene.add(sphere);
+sphere.castShadow = true;
 /**hasta acá termino el agregado de los elementos geometricos que nosotros 
  * necesitamos para la escena 
 */
@@ -67,17 +73,42 @@ scene.add(sphere);
 const ambientLight = new THREE.AmbientLight(0x333333);
 scene.add(ambientLight)
 
-
+/*
 
 const directionalLight = new THREE.DirectionalLight(0xFFFFFF,0.8);
 scene.add(directionalLight);
-directionalLight.position.set(-10,10,10)
+directionalLight.position.set(-10,10,10);
+directionalLight.castShadow = true;
+directionalLight.shadow.camera.bottom = -12;
+directionalLight.shadow.camera.right = 12;
+directionalLight.shadow.camera.left = -12;
+directionalLight.shadow.camera.top = 12;
 
 
-const dLightHelper = new THREE.DirectionalLightHelper(directionalLight,5);
+const dLightHelper = new THREE.DirectionalLightHelper(directionalLight,10);
 scene.add(dLightHelper);
+*/
+
+//------------Vamos a agregar luces que tienen que ver con spothlight ---------
+
+const spotLight = new THREE.SpotLight(0xffffff, 5, 100, 0.4, 0.9, 0.5);
+scene.add(spotLight);
+spotLight.position.set(0,20,0);
+spotLight.castShadow = true;
 
 
+const sLightHelper = new THREE.SpotLightHelper(spotLight);
+scene.add(sLightHelper);
+
+
+
+
+
+
+//--------Vamos a usar un helper de lacamra de sombras 
+/*const dLightShadowHelper = new THREE.CameraHelper(directionalLight.shadow.camera);
+scene.add(dLightShadowHelper);
+*/
 
 //------------------------------------------------------------------------------
 
@@ -88,7 +119,10 @@ const gui = new dat.GUI();
 const options = {
     sphereColor: "#ffea00",
     wireframe:sphereMaterial.wireframe,
-    speed : 0.01
+    speed : 0.01,
+    angle: 0.2,
+    penumbra: 0,
+    intensity: 1
 }
 gui.addColor(options,"sphereColor").onChange(function(e){
     sphere.material.color.set(e);
@@ -99,6 +133,10 @@ gui.add(options,"wireframe").onChange(function(e){
 });
 
 gui.add(options, "speed",0,0.5);
+gui.add(options, "angle",0,1);
+gui.add(options, "penumbra",0,1);
+gui.add(options, "intensity",0,0.5);
+
 let step =0;
 /**-------------------------------------------------------------------- */
 /**-------------------------------------------------------------------- */
@@ -114,7 +152,12 @@ function animate() {
     step += options.speed ;
     sphere.position.y = 10*Math.abs(Math.sin(step));
 
-    
+
+    spotLight.angle = options.angle;
+    spotLight.penumbra = options.penumbra;
+    spotLight.intensity = options.intensity;
+
+    sLightHelper.update();
 
     // Render the scene from the perspective of the camera
     renderer.render(scene, camera);
