@@ -67,10 +67,19 @@ scene.add(ambientLight);
 
 const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
 scene.add(directionalLight);
+directionalLight.castShadow = true; // Permitir que la luz direccional proyecte sombras
 directionalLight.position.set(5,5,5);
 const directionalLightHelper = new THREE.DirectionalLightHelper(directionalLight, 1); // Ayuda visual para la luz direccional
 scene.add(directionalLightHelper);
 
+
+const spotLight =new THREE.SpotLight(0xff0000, 5, 20, Math.PI / 6, 0.5, 2); // Color inicial rojo (0xff0000)
+spotLight.position.set(-4,5,0);
+spotLight.castShadow = true;
+scene.add(spotLight);
+
+const spotLightHelper = new THREE.SpotLightHelper(spotLight); // Ayudante para ver la posición y dirección del SpotLight
+scene.add(spotLightHelper);
 
 //--------Aca vamos a configurar sobre los parametros de dat gui
 
@@ -80,11 +89,20 @@ const params = {
     intensity : ambientLight.intensity,
     ambientColor: ambientLight.color.getHex(), // Color de la luz ambiental
 
-    directionalLightColor: directionalLight.color.getHex()
+    directionalLightColor: directionalLight.color.getHex(),
+    directionalIntensity: directionalLight.intensity,
+
+    spotLightColor: spotLight.color.getHex(),
+    spotLightIntensity: spotLight.intensity,
+    spotLightDistance: spotLight.distance,
+    spotLightAngle: spotLight.angle,
+    spotLightPenumbra: spotLight.penumbra,
+    spotLightDecay: spotLight.decay,
+
 }
 
+//-----// Agregamos una carpeta para las luces ambientales
 const ambientalLightFolder = gui.addFolder('Luces ambientales');
-
 ambientalLightFolder.add(ambientLight,"visible");
 ambientalLightFolder.add(params, 'intensity', 0, 2)
                     .onChange(value => ambientLight.intensity = value);
@@ -92,13 +110,32 @@ ambientalLightFolder.addColor(params,"ambientColor",0,2)
                     .onChange(value =>ambientLight.color.setHex(value))
 ambientalLightFolder.open(); // Abrir la carpeta por defecto
 
-// ----Agregamos una luz direccional para ver las sombras
+//-----// Agregamos una carpeta para las luces direccionales
 const directionalLightFolder = gui.addFolder('Luz DIreccional');
 directionalLightFolder.add(directionalLight,"visible");
 directionalLightFolder.addColor(params, 'directionalLightColor', 0, 2)
                       .onChange(value => directionalLight.color.setHex(value));
-
+directionalLightFolder.add(params,"directionalIntensity",0,5)
+                      .onChange(value => directionalLight.intensity = value);
 directionalLightFolder.open();
+
+const spotLightFolder = gui.addFolder("Luz Focal");
+spotLightFolder.add(spotLight,"visible");
+spotLightFolder.addColor(params, 'spotLightColor', 0, 2)
+               .onChange(value => spotLight.color.setHex(value));
+spotLightFolder.add(params, 'spotLightIntensity', 0, 20)
+               .onChange(value => spotLight.intensity = value);
+spotLightFolder.add(params, 'spotLightDistance', 0, 50)
+               .onChange(value => spotLight.distance = value);
+spotLightFolder.add(params, 'spotLightAngle', 0, Math.PI / 2)
+               .onChange(value => spotLight.angle = value);
+spotLightFolder.add(params, 'spotLightPenumbra', 0, 1)
+               .onChange(value => spotLight.penumbra = value);
+spotLightFolder.add(params, 'spotLightDecay', 0, 2)
+               .onChange(value => spotLight.decay = value);
+spotLightFolder.add(spotLight, 'castShadow')
+               .onChange(value => spotLight.castShadow = value);
+spotLightFolder.open();
 
 
 
