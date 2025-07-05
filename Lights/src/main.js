@@ -77,9 +77,15 @@ const spotLight =new THREE.SpotLight(0xff0000, 5, 20, Math.PI / 6, 0.5, 2); // C
 spotLight.position.set(-4,5,0);
 spotLight.castShadow = true;
 scene.add(spotLight);
-
 const spotLightHelper = new THREE.SpotLightHelper(spotLight); // Ayudante para ver la posición y dirección del SpotLight
 scene.add(spotLightHelper);
+
+
+const pointLight = new THREE.PointLight(0x00ff00, 2, 10,0.8); // Luz puntual verde
+pointLight.position.set(0, 5, 0); // Posición de la luz puntual
+scene.add(pointLight);
+const pointLightHelper = new THREE.PointLightHelper(pointLight, 0.5); // Ayudante para ver la posición de la luz puntual
+scene.add(pointLightHelper);
 
 //--------Aca vamos a configurar sobre los parametros de dat gui
 
@@ -98,6 +104,13 @@ const params = {
     spotLightAngle: spotLight.angle,
     spotLightPenumbra: spotLight.penumbra,
     spotLightDecay: spotLight.decay,
+
+
+    pointLightColor: pointLight.color.getHex(),
+    pointLightIntensity: pointLight.intensity,
+    pointLightDistance: pointLight.distance,
+    pointLightDecay: pointLight.decay,
+
 
 }
 
@@ -138,6 +151,19 @@ spotLightFolder.add(spotLight, 'castShadow')
 spotLightFolder.open();
 
 
+const pointLightFolder = gui.addFolder("Luz Puntual");
+pointLightFolder.add(pointLight,"visible");
+pointLightFolder.addColor(params, 'pointLightColor', 0, 2)
+                .onChange(value => pointLight.color.setHex(value));
+pointLightFolder.add(params, 'pointLightIntensity', 0, 20)
+                .onChange(value => pointLight.intensity = value);
+pointLightFolder.add(params, 'pointLightDistance', 0, 50)
+                .onChange(value => pointLight.distance = value);
+pointLightFolder.add(params, 'pointLightDecay', 0, 2)
+                .onChange(value => pointLight.decay = value);   
+pointLightFolder.add(pointLight, 'castShadow');
+
+pointLightFolder.open();
 
 
 /*
