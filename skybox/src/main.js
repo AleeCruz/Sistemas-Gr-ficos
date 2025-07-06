@@ -17,11 +17,12 @@ const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.25;
 
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.5); // Luz ambiental
+
+const ambientLight = new THREE.AmbientLight(0x404040, 1); // Luz ambiental suave
 scene.add(ambientLight);
 
-const directionalLight = new THREE.DirectionalLight(0xffffff, 1); // Luz direccional
-directionalLight.position.set(0, 10, 0); // Posición de la luz
+const directionalLight = new THREE.DirectionalLight(0xffffff,1);
+directionalLight.position.set(10,10,10);
 scene.add(directionalLight);
 
 // Posicionar la cámara
@@ -49,12 +50,16 @@ let texture_lf = tgaLoader.load("assets/skybox/stormydays_lf.tga");
 // Three.js orden: +X, -X, +Y, -Y, +Z, -Z
 // Tu orden:      rt, lf, up, dn, ft, bk
 
-materialArray.push(new THREE.MeshBasicMaterial({ map: texture_rt })); // +X
-materialArray.push(new THREE.MeshBasicMaterial({ map: texture_lf })); // -X
-materialArray.push(new THREE.MeshBasicMaterial({ map: texture_up })); // +Y
-materialArray.push(new THREE.MeshBasicMaterial({ map: texture_dn })); // -Y
 materialArray.push(new THREE.MeshBasicMaterial({ map: texture_ft })); // +Z
 materialArray.push(new THREE.MeshBasicMaterial({ map: texture_bk })); // -Z
+materialArray.push(new THREE.MeshBasicMaterial({ map: texture_up })); // +Y
+materialArray.push(new THREE.MeshBasicMaterial({ map: texture_dn })); // -Y
+materialArray.push(new THREE.MeshBasicMaterial({ 
+    map: texture_rt
+   ///transparent: true, // Necesario para que opacity funcione
+    //opacity: 0.3
+      })); // +X
+materialArray.push(new THREE.MeshBasicMaterial({ map: texture_lf })); // -X
 
 // Asegúrate de que las caras del material no muestren el "reverso" del cubo
 // Esto es importante para que el skybox se vea correctamente desde adentro
@@ -66,8 +71,10 @@ for (let i = 0; i < 6; i++) {
 // Tamaño del skybox: hazlo GRANDE.
 // Si tu ciudad es de 20x20, el skybox debe ser mucho más grande para que parezca el horizonte.
 // Un tamaño de 1000 es un buen punto de partida.
-let skyboxGeo = new THREE.BoxGeometry(20,20,20); 
+let skyboxSize= 50;
+let skyboxGeo = new THREE.BoxGeometry(skyboxSize,skyboxSize,skyboxSize); 
 let skybox = new THREE.Mesh(skyboxGeo, materialArray);
+skybox.position.set(0, skyboxSize/3, 0); // Centra el skybox en la escena
 scene.add(skybox);
 
 // Si en el futuro usas scene.background, el mesh del skybox no sería necesario.
@@ -77,7 +84,7 @@ scene.add(skybox);
 
 // Opcional: añade tu plano de ciudad y edificios aquí
 // Un simple plano como piso de la ciudad
-const floorGeometry = new THREE.PlaneGeometry(20, 20); // 20x20 en el plano XZ
+const floorGeometry = new THREE.PlaneGeometry(50, 50); // 20x20 en el plano XZ
 const floorMaterial = new THREE.MeshStandardMaterial({ color: 0x808080, side: THREE.DoubleSide });
 const floor = new THREE.Mesh(floorGeometry, floorMaterial);
 floor.rotation.x = Math.PI / 2; // Rota el plano para que el XZ sea el piso
