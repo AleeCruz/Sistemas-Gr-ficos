@@ -26,7 +26,8 @@ directionalLight.position.set(10,10,10);
 scene.add(directionalLight);
 
 // Posicionar la cámara
-camera.position.set(30,30,30);
+camera.position.set(20,5,20);
+
 
 
 //------Concepto de skybox -------

@@ -37,7 +37,7 @@ scene.add(directionalLightHelper);
 
 // --- CURVA ---
 curva = crearCurva();
-const puntosCurva = curva.getPoints(100);
+const puntosCurva = curva.getPoints(50);
 const curvaGeometry = new THREE.BufferGeometry().setFromPoints(puntosCurva);
 scene.add(new THREE.Line(curvaGeometry, new THREE.LineBasicMaterial({ color: 0xff0000 })));
 
@@ -69,7 +69,7 @@ window.addEventListener('keydown', (e) => {
 });
 
 // --- LÁMPARAS A LO LARGO DE LA CURVA (alternando lados) ---
-const puntosLamparas = curva.getSpacedPoints(11);
+const puntosLamparas = curva.getSpacedPoints(7);
 
 puntosLamparas.forEach((pos, i) => {
     const lampara = crearLamparaCalle();
