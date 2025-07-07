@@ -1,4 +1,3 @@
-// modules/sunAnimation.js
 import * as THREE from 'three';
 
 let time = 0;
