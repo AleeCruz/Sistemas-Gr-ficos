@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { scene } from './scene.js';
+import { scene } from './scene.js'; // Asegúrate de que 'scene' se exporte desde scene.js
 import {crearCilindroVertical_1} from "./ObjectsCity/cilindroParametric.js";
 import {crearCilindroVertical} from './ObjectsCity/cilindro.js';
 import {crearCuadradoBarridoGirando} from "./ObjectsCity/cuadradoRotativo.js";
@@ -15,8 +15,6 @@ import {crearHexagonoEscaladoBarridoParametrico} from './ObjectsCity/hexagonoPar
 import {crearElipseBarridoGirandoParametrico} from "./ObjectsCity/elipseRotParam.js"
 import {crearVacio} from "./ObjectsCity/vacio.js"
 
-
-
 export function isInsideStreetArea(x, z, curve, streetWidth, samples = 100) {
   let minDistanceSq = Infinity;
   const testPoint = new THREE.Vector3(x, 0, z);
@@ -30,26 +28,38 @@ export function isInsideStreetArea(x, z, curve, streetWidth, samples = 100) {
   }
 
   const distance = Math.sqrt(minDistanceSq);
-  return distance < 0.88;
+  return distance < 0.98;
 }
 
 
 const tiposDeObjetos = {
- // cilindro: crearCilindroVertical,
   cilindro_1: crearCilindroVertical_1,
-  //cuadrado: crearCuadradoBarridoGirando,
   cuadrado_1: crearCuadradoBarridoGirandoParametrico,
-  //elipse1: crearElipse_1,
   elipse_1_1: crearElipse_Parametric,
-  //elipse2: crearElipse_2,
   elipse_2_2: crearElipse_Parametric_2,
-  //rectangulo: crearRectanguloBarridoGirando,
   rectangulo_1: crearRectanguloBarridoGirandoParametrico,
-  //hexagono: crearHexagonoEscaladoBarrido,
   hexagono_1: crearHexagonoEscaladoBarridoParametrico,
   elipseRotParm: crearElipseBarridoGirandoParametrico,
   vacio: crearVacio,
 };
+
+// --- Plantillas de objetos para clonar ---
+// Vamos a almacenar aquí una instancia de cada tipo de objeto.
+const plantillasDeObjetos = {};
+
+// Inicializamos las plantillas una vez cuando este módulo se carga.
+// Esto asume que estas funciones de creación de objetos no tienen efectos secundarios
+// que impidan su llamada única al inicio.
+for (const tipo in tiposDeObjetos) {
+  if (tiposDeObjetos.hasOwnProperty(tipo)) {
+    plantillasDeObjetos[tipo] = tiposDeObjetos[tipo]();
+    // Opcional: Si los objetos tienen geometrías o materiales muy grandes,
+    // puedes liberarlos aquí si no quieres que la plantilla "real" persista en la memoria
+    // después de clonarla, pero generalmente no es necesario.
+    // Ej: plantilla.geometry.dispose() - ¡No hagas esto si necesitas la plantilla viva!
+  }
+}
+
 
 export function generarObjetosSinSuperposicion({
   curve,
@@ -81,11 +91,20 @@ export function generarObjetosSinSuperposicion({
   // 3. Agregar objetos a la escena sin superponer
   posicionesValidas.forEach(pos => {
     const tipo = tipos[tipoIndex];
-    const crearObjeto = tiposDeObjetos[tipo];
+    const plantillaObjeto = plantillasDeObjetos[tipo]; // Obtenemos la plantilla del tipo actual
 
-    const objeto = crearObjeto();
-    objeto.position.set(pos.x, 0.35, pos.z);
-    scene.add(objeto);
+    // --- ¡Aquí usamos clone()! ---
+    const objetoClonado = plantillaObjeto.clone();
+
+    // Ahora, si el objeto original tenía geometrías o materiales únicos por instancia,
+    // necesitarías clonarlos explícitamente si `crearObjeto()` los creara nuevos.
+    // Pero si `crearObjeto()` siempre devuelve un Mesh con la misma geometría y material,
+    // `clone()` ya comparte esas referencias por defecto, lo cual es eficiente.
+    // Si tus funciones `crearX` devuelven un `Group` o `Object3D` con múltiples Meshes anidados,
+    // `clone()` también manejará eso recursivamente, clonando todos los Meshes y sus propiedades.
+
+    objetoClonado.position.set(pos.x, 0.35, pos.z);
+    scene.add(objetoClonado);
 
     tipoIndex++;
     if (tipoIndex >= tipos.length) tipoIndex = 0; // reinicia la secuencia
