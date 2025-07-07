@@ -2,6 +2,11 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
+import { crearCurva } from './curva.js';
+import { createTunnel } from './tunel.js';
+import { crearPuenteAutopista } from './puente.js';
+import { crearLamparaCalle } from './crearLamparaCalle.js';
+
 // --- ESCENA, CÁMARA Y RENDERIZADOR ---
 // El fondo de la escena y la niebla ahora son gestionados por DayNightManager,
 // por lo que sus configuraciones iniciales se eliminan aquí.
@@ -55,16 +60,67 @@ scene.add(plane);
 const grid = new THREE.GridHelper(gridSize, gridDivision, 0xaa0000, 0x550000);
 // scene.add(grid);
 
-// Las luces globales ahora se definen y gestionan en main.js
-// para que puedan pasarse al DayNightManager.
-// const ambientLight = new THREE.AmbientLight(0xffffff, 0.5); // ELIMINADO
-// scene.add(ambientLight); // ELIMINADO
+// Curva y tubo que representa la carretera
+const curva = crearCurva();
 
-// const directionalLight = new THREE.DirectionalLight(0xffffff, 1); // ELIMINADO
-// directionalLight.position.set(5, 10, 5); // ELIMINADO
-// scene.add(directionalLight); // ELIMINADO
 
-// Exportar componentes de la escena para su uso en otros módulos
+// Túnel en posición de la curva
+const tunel = createTunnel();
+const tTunel = 0.93;
+const puntoTunel = curva.getPointAt(tTunel);
+const tangenteTunel = curva.getTangentAt(tTunel);
+tunel.position.copy(puntoTunel);
+tunel.lookAt(puntoTunel.clone().add(tangenteTunel));
+tunel.scale.set(0.1,0.1,0.09); // Escalar túnel
+scene.add(tunel);
+
+// Puente en otra posición
+// Crear un puente base una sola vez
+const puenteBase = crearPuenteAutopista();
+puenteBase.scale.set(0.007, 0.02, 0.01); // Escala inicial para el base
+// Opcional: agregar base si querés verlo también (o no)
+
+// Clonar puentes en posiciones diferentes
+const posicionesPuente = [0.6, 0.7,0.8]; // Parámetros t sobre la curva para los puentes
+
+posicionesPuente.forEach(tPos => {
+  const punto = curva.getPointAt(tPos);
+  const tangente = curva.getTangentAt(tPos);
+
+  const puenteClone = puenteBase.clone();
+  puenteClone.position.copy(punto);
+  puenteClone.lookAt(punto.clone().add(tangente));
+  // Si querés escala diferente para los clones, podés cambiar acá:
+  // puenteClone.scale.set(0.007, 0.02, 0.01);
+  scene.add(puenteClone);
+});
+
+// Lámparas distribuidas a lo largo de la curva
+// Crear una lámpara base una sola vez
+const lamparaBase = crearLamparaCalle();
+const cantidadLamparas = 4;
+const distanciaAlCostado = 0.6;
+
+for (let i = 0; i < cantidadLamparas; i++) {
+  const t = i / cantidadLamparas;
+  const pos = curva.getPointAt(t);
+  const tangente = curva.getTangentAt(t);
+  const normal = tangente.clone().cross(new THREE.Vector3(0, 1, 0)).normalize();
+
+  // Lámpara derecha (offset positivo)
+  const lamparaDerecha = lamparaBase.clone();
+  lamparaDerecha.position.copy(pos.clone().add(normal.clone().multiplyScalar(distanciaAlCostado)));
+  lamparaDerecha.scale.set(0.5, 0.5, 0.5);
+  scene.add(lamparaDerecha);
+
+  // Lámpara izquierda (offset negativo)
+  const lamparaIzquierda = lamparaBase.clone();
+  lamparaIzquierda.position.copy(pos.clone().add(normal.clone().multiplyScalar(-distanciaAlCostado)));
+  lamparaIzquierda.scale.set(0.5, 0.5, 0.5);
+  scene.add(lamparaIzquierda);
+}
+
+
 export {
     scene, camera, renderer, controls,
     axesHelper, planeGeometry, planeMaterial,
