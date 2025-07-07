@@ -23,13 +23,26 @@ document.body.appendChild(renderer.domElement);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 
+// --- LUCES ---
+
+
+const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+directionalLight.position.set(-5, 5, 5);
+scene.add(directionalLight);
+
+const directionalLightHelper = new THREE.DirectionalLightHelper(
+    directionalLight,
+    1
+);
+scene.add(directionalLightHelper);
+
 
 // --- EJES, PLANO, GRILLA ---
 const axesHelper = new THREE.AxesHelper(7);
 scene.add(axesHelper);
 
-const gridSize = 15;
-const gridDivision = 15;
+const gridSize = 17;
+const gridDivision = 17;
 const planeGeometry = new THREE.PlaneGeometry(gridSize, gridDivision);
 const planeMaterial = new THREE.MeshBasicMaterial({
     color: 0xf08080,

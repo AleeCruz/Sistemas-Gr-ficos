@@ -28,7 +28,7 @@ export function isInsideStreetArea(x, z, curve, streetWidth, samples = 100) {
   }
 
   const distance = Math.sqrt(minDistanceSq);
-  return distance < 0.98;
+  return distance < 1.5;
 }
 
 

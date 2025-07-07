@@ -1,17 +1,30 @@
 import * as THREE from 'three';
 import { ParametricGeometry } from 'three/examples/jsm/geometries/ParametricGeometry.js';
 
-/**
- * Crea un cilindro vertical mediante una superficie paramétrica, incluyendo tapas superior e inferior.
- */
+// Cargar la textura de ventanas (asegurate de que esté en public/textures/)
+const texturaVentanas = new THREE.TextureLoader().load('textures/image.png');
+texturaVentanas.wrapS = THREE.RepeatWrapping;
+texturaVentanas.wrapT = THREE.RepeatWrapping;
+texturaVentanas.repeat.set(5, 3); // Ajustá esto a gusto
+
+// Material con textura para el cuerpo
+const materialCuerpo = new THREE.MeshStandardMaterial({
+    map: texturaVentanas,
+    side: THREE.DoubleSide,
+});
+
+// Material liso para las tapas
+const materialTapa = new THREE.MeshStandardMaterial({
+    color: 0x555555, // gris oscuro o el que prefieras
+    side: THREE.DoubleSide,
+});
+
 export function crearCilindroVertical_1(
     radius = 0.33,
-    altura = 2.35,
+    altura = 2.75,
     heightSegments = 30,
-    radialSegments = 20,
-    color = 0x87CEEB
+    radialSegments = 20
 ) {
-    // 1. Superficie lateral paramétrica
     const cilindroParametrico = (u, v, target) => {
         const angle = 2 * Math.PI * v;
         const x = radius * Math.cos(angle);
@@ -21,23 +34,17 @@ export function crearCilindroVertical_1(
     };
 
     const cuerpoGeometry = new ParametricGeometry(cilindroParametrico, radialSegments, heightSegments);
-    const material = new THREE.MeshStandardMaterial({ color, side: THREE.DoubleSide , wireframe: false });
+    const cuerpo = new THREE.Mesh(cuerpoGeometry, materialCuerpo);
 
-    const cuerpo = new THREE.Mesh(cuerpoGeometry, material);
-
-    // 2. Tapa inferior
+    // Tapas con material plano
     const tapaInferiorGeom = new THREE.CircleGeometry(radius, radialSegments);
-    tapaInferiorGeom.rotateX(-Math.PI / 2); // orientación hacia arriba
-    tapaInferiorGeom.translate(0, -0.35, 0);
-    const tapaInferior = new THREE.Mesh(tapaInferiorGeom, material);
+    tapaInferiorGeom.rotateX(-Math.PI / 2).translate(0, -0.35, 0);
+    const tapaInferior = new THREE.Mesh(tapaInferiorGeom, materialTapa);
 
-    // 3. Tapa superior
     const tapaSuperiorGeom = new THREE.CircleGeometry(radius, radialSegments);
-    tapaSuperiorGeom.rotateX(Math.PI / 2); // orientación hacia abajo
-    tapaSuperiorGeom.translate(0, altura - 0.35, 0);
-    const tapaSuperior = new THREE.Mesh(tapaSuperiorGeom, material);
+    tapaSuperiorGeom.rotateX(Math.PI / 2).translate(0, altura - 0.35, 0);
+    const tapaSuperior = new THREE.Mesh(tapaSuperiorGeom, materialTapa);
 
-    // 4. Crear un grupo con el cilindro completo
     const grupo = new THREE.Group();
     grupo.add(cuerpo, tapaInferior, tapaSuperior);
 

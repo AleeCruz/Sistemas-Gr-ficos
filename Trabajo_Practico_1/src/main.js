@@ -21,23 +21,11 @@ generarObjetosSinSuperposicion({
 let auto, curva, clock;
 let cameraManager;
 
-// --- LUCES ---
-const ambientLight = new THREE.AmbientLight(0x404040);
-scene.add(ambientLight);
 
-const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-directionalLight.position.set(5, 5, 5);
-scene.add(directionalLight);
-
-const directionalLightHelper = new THREE.DirectionalLightHelper(
-    directionalLight,
-    1
-);
-scene.add(directionalLightHelper);
 
 // --- CURVA ---
 curva = crearCurva();
-const puntosCurva = curva.getPoints(50);
+const puntosCurva = curva.getPoints(200);
 const curvaGeometry = new THREE.BufferGeometry().setFromPoints(puntosCurva);
 scene.add(new THREE.Line(curvaGeometry, new THREE.LineBasicMaterial({ color: 0xff0000 })));
 
@@ -81,7 +69,7 @@ puntosLamparas.forEach((pos, i) => {
     const normal = new THREE.Vector3(-tangente.z, 0, tangente.x).normalize();
 
     // Alternar lados izquierda/derecha
-    const lado = i % 2 === 0 ? 1 : -1;
+    const lado = i % 2 === 0 ? 3 : -3;
     lampara.position.add(normal.multiplyScalar(0.5 * lado));
 
     // Mirar hacia el centro del camino
