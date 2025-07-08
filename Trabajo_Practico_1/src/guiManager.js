@@ -16,7 +16,7 @@ export function setupGUI(spotLight, ambientLight, scene, sharedSunSettings) {
         // Opcional: Actualizar el color de la esfera visual del sol
         spotLight.children[0].material.color.set(val);
     });
-    sunFolder.add(sharedSunSettings, 'intensity', 0, 5).name('Intensidad').onChange(val => {
+    sunFolder.add(sharedSunSettings, 'intensity', 0, 25).name('Intensidad').onChange(val => {
         spotLight.intensity = val;
     });
     sunFolder.add(sharedSunSettings, 'angle', 0.01, Math.PI / 2).name('Ángulo').onChange(val => {
@@ -38,7 +38,7 @@ export function setupGUI(spotLight, ambientLight, scene, sharedSunSettings) {
     // --- Controles del Ambiente ---
     environmentFolder = gui.addFolder('Controles de Ambiente');
 
-    environmentFolder.add(sharedSunSettings, 'ambientIntensity', 0, 1).name('Intensidad Ambiental').onChange(val => {
+    environmentFolder.add(sharedSunSettings, 'ambientIntensity', 0, 0.3).name('Intensidad Ambiental').onChange(val => {
         ambientLight.intensity = val;
     });
     environmentFolder.addColor(sharedSunSettings, 'skyColor').name('Color del Cielo').onChange(val => {
@@ -74,38 +74,38 @@ function setSunPreset(mode, spotLight, ambientLight, scene, sharedSunSettings) {
     // Puedes ajustar estos valores según tus preferencias
     switch (mode) {
         case 'morning':
-            newSunColor = '#ffd59a'; // Naranja suave
-            newIntensity = 1.0;
-            newAngle = Math.PI / 4;
-            newPenumbra = 0.5;
-            newAmbientIntensity = 0.3;
-            newSkyColor = '#fff2d0'; // Luz cálida
-            newFogColor = '#fff2d0';
-            newFogNear = 60;
-            newFogFar = 120;
+            newSunColor = '#ffa012'; // Naranja suave
+            newIntensity = 25.0;
+            newAngle = 0.36;
+            newPenumbra = 0.31;
+            newAmbientIntensity = 0;
+            newSkyColor = '#e58914'; // Luz cálida
+            newFogColor = '#e58914';
+            newFogNear = 1;
+            newFogFar = 67;
             break;
 
         case 'afternoon':
             newSunColor = '#ffffff'; // Blanca intensa
-            newIntensity = 2.0;
-            newAngle = Math.PI / 5;
-            newPenumbra = 0.2;
-            newAmbientIntensity = 0.5;
+            newIntensity = 25;
+            newAngle = 0.48;
+            newPenumbra = 0.23;
+            newAmbientIntensity = 0.3;
             newSkyColor = '#87ceeb'; // Celeste cielo
-            newFogColor = '#87ceeb';
-            newFogNear = 60;
-            newFogFar = 120;
+            newFogColor = '#cde5ef';
+            newFogNear = 1;
+            newFogFar = 67;
             break;
 
         case 'night':
-            newSunColor = '#92aaff'; // Azul tenue
-            newIntensity = 0.3;
+            newSunColor = '#4d4d6f'; // Azul tenue
+            newIntensity = 20;
             newAngle = Math.PI / 6;
             newPenumbra = 0.8;
-            newAmbientIntensity = 0.1;
-            newSkyColor = '#0c1445'; // Noche
-            newFogColor = '#0c1445';
-            newFogNear = 10;
+            newAmbientIntensity = 0;
+            newSkyColor = '#000000'; // Noche
+            newFogColor = '#000000';
+            newFogNear = 1;
             newFogFar = 50;
             break;
     }
