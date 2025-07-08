@@ -1,258 +1,114 @@
+// main.js
+
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import * as dat from 'dat.gui';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GUI } from 'dat.gui';
+import { createIlluminationSun } from './iluminationSun.js';
 
-let scene, camera, renderer, controls;
-let spotLight, lightHelper, sunPivot, ambient;
-let gui, sunFolder, environmentFolder; // Se añadió environmentFolder
-let time = 0;
+// 1. Configuración básica de la escena
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.autoUpdate = true;
+document.body.appendChild(renderer.domElement);
 
-// Centralized settings object for easier GUI integration and state management
-const sunSettings = {
-    color: '#ffffff', // Initial color of the sun (spotlight)
-    intensity: 1.5,
-    angle: Math.PI / 5,
-    penumbra: 0.2,
-    distance: 200,
-    ambientIntensity: 0.4,
-    autoAnimateSun: true, // New setting to control sun's automatic movement
-    skyColor: '#87CEEB', // Initial sky color (Three.js expects hex string for dat.GUI color)
-    fogColor: '#87CEEB', // Initial fog color
-    fogNear: 60,
-    fogFar: 120,
-    resetSunPosition: () => { // Function to reset sun position to default (top-center)
-        spotLight.position.set(0, 10, 0);
-        spotLight.target.position.set(0, 0, 0);
-        spotLight.target.updateMatrixWorld();
-        lightHelper.update();
-        time = 0; // Reset time to restart animation from beginning if re-enabled
-    }
+// Ajustar el color de fondo del renderer para que sea más visible
+renderer.setClearColor(0xaaaaaa);
+
+// 2. Luz Ambiental
+const ambientLight = new THREE.AmbientLight(0x404040);
+scene.add(ambientLight);
+
+// 3. Crear el plano XZ
+const planeGeometry = new THREE.PlaneGeometry(10, 10);
+const planeMaterial = new THREE.MeshStandardMaterial({ color: 0x888888, side: THREE.DoubleSide });
+const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+plane.rotation.x = Math.PI / 2;
+plane.receiveShadow = true;
+scene.add(plane);
+
+// 4. Crear el cubo
+const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
+const cubeMaterial = new THREE.MeshStandardMaterial({ color: 0x0077ff });
+const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+cube.castShadow = true;
+cube.receiveShadow = true;
+cube.position.y = 0.5;
+scene.add(cube);
+
+// --- Uso del nuevo módulo para el sol y la luz ---
+const initialOrbitRadius = 8;
+const initialOrbitSpeed = 0.5;
+const targetPosition = new THREE.Vector3(0, 0.5, 0);
+const { sun, spotLight, update: updateSun, params: sunParams, setOrbitAngle } = createIlluminationSun(scene, initialOrbitRadius, initialOrbitSpeed, targetPosition);
+// --------------------------------------------------
+
+// 6. Posicionar la cámara
+camera.position.set(5, 5, 5);
+camera.lookAt(0, 0, 0);
+
+// 7. Controles de órbita para la cámara
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.05;
+
+// --- Configuración de dat.GUI ---
+const gui = new GUI();
+const sunFolder = gui.addFolder('Control Sol');
+
+// Parámetros para los controles del sol
+sunFolder.add(sunParams, 'orbitRadius', 1, 15).name('Radio Órbita');
+sunFolder.add(sunParams, 'orbitSpeed', 0.1, 6.0).name('Velocidad Órbita');
+
+// --- NUEVOS CONTROLES PARA MOMENTOS DEL DÍA ---
+// Definir ángulos para cada momento del día (en radianes)
+// Considera que una órbita completa es 2 * Math.PI (aproximadamente 6.28 radianes)
+// Y que el sol se mueve en el plano XY. Por ejemplo:
+// - Mediodía: Sol arriba, sombra debajo (o no visible si el plano no es vertical)
+// - Mañana: Sol saliendo por un lado (ej: -X o +X)
+// - Tarde: Sol poniéndose por el otro lado
+// - Noche: Sol detrás o completamente oscuro
+// Los valores exactos dependerán de cómo quieres que se vea tu "día" en tu escena.
+const timeOfDayAngles = {
+    'Mañana': Math.PI * 0.05, // Ejemplo: Sol arriba-izquierda
+    'Mediodía': Math.PI * 0.38, // Ejemplo: Sol directamente encima del cubo (Y positiva)
+    'Tarde': Math.PI * 0.75,   // Ejemplo: Sol arriba-derecha
+    'Noche': Math.PI * 1.05     // Ejemplo: Sol por debajo (no visible, o muy poca luz)
 };
 
-init();
-animate();
+const timeOfDayControls = {
+    moment: 'Mañana' // Valor inicial
+};
 
-function init() {
-    // Escena
-    scene = new THREE.Scene();
-    scene.background = new THREE.Color(sunSettings.skyColor);
-    scene.fog = new THREE.Fog(new THREE.Color(sunSettings.fogColor), sunSettings.fogNear, sunSettings.fogFar);
-
-    // Cámara
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 200);
-    camera.position.set(0, 8, 20);
-
-    // Render
-    renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    document.body.appendChild(renderer.domElement);
-
-    // Controles
-    controls = new OrbitControls(camera, renderer.domElement);
-
-    // Piso
-    const ground = new THREE.Mesh(
-        new THREE.PlaneGeometry(200, 200),
-        new THREE.MeshStandardMaterial({ color: 0x3a5f0b })
-    );
-    ground.rotation.x = -Math.PI / 2;
-    ground.receiveShadow = true;
-    scene.add(ground);
-
-    // Sol (SpotLight)
-    spotLight = new THREE.SpotLight(
-        new THREE.Color(sunSettings.color),
-        sunSettings.intensity,
-        sunSettings.distance,
-        sunSettings.angle,
-        sunSettings.penumbra,
-        1
-    );
-    spotLight.position.set(0, 10, 0);
-    spotLight.castShadow = true;
-    spotLight.shadow.mapSize.width = 1024;
-    spotLight.shadow.mapSize.height = 1024;
-    spotLight.shadow.camera.near = 0.5;
-    spotLight.shadow.camera.far = 300;
-
-    spotLight.target.position.set(0, 0, 0); // Ensure target is at origin
-    scene.add(spotLight.target);
-
-    sunPivot = new THREE.Object3D();
-    sunPivot.add(spotLight);
-    scene.add(sunPivot);
-
-    // Esfera visual para el sol
-    const sunSphere = new THREE.Mesh(
-        new THREE.SphereGeometry(0.6, 32, 32),
-        new THREE.MeshBasicMaterial({ color: 0xffff00 })
-    );
-    spotLight.add(sunSphere);
-
-    // Luz ambiental
-    ambient = new THREE.AmbientLight(0xffffff, sunSettings.ambientIntensity);
-    scene.add(ambient);
-
-    // Helper
-    lightHelper = new THREE.SpotLightHelper(spotLight);
-    scene.add(lightHelper);
-
-    // GUI
-    setupGUI();
-
-    // Resize
-    window.addEventListener('resize', onWindowResize);
-}
-
-function setupGUI() {
-    gui = new dat.GUI();
-
-    // --- Controles del Sol (SpotLight) ---
-    sunFolder = gui.addFolder('Controles del Sol');
-
-    sunFolder.addColor(sunSettings, 'color').name('Color de Luz').onChange(val => {
-        spotLight.color.set(val);
-        // Also update the visual sun sphere color if desired, e.g.:
-        // spotLight.children[0].material.color.set(val);
-    });
-    sunFolder.add(sunSettings, 'intensity', 0, 5).name('Intensidad').onChange(val => {
-        spotLight.intensity = val;
-    });
-    sunFolder.add(sunSettings, 'angle', 0.01, Math.PI / 2).name('Ángulo').onChange(val => {
-        spotLight.angle = val;
-    });
-    sunFolder.add(sunSettings, 'penumbra', 0, 1).name('Penumbra').onChange(val => {
-        spotLight.penumbra = val;
-    });
-    sunFolder.add(sunSettings, 'distance', 10, 500).name('Distancia').onChange(val => {
-        spotLight.distance = val;
+// Añadir un dropdown (desplegable) a dat.GUI
+sunFolder.add(timeOfDayControls, 'moment', Object.keys(timeOfDayAngles))
+    .name('Momento del Día')
+    .onChange((value) => {
+        // Cuando el usuario selecciona una opción, establecemos el ángulo correspondiente
+        setOrbitAngle(timeOfDayAngles[value]);
     });
 
-    sunFolder.add(sunSettings, 'autoAnimateSun').name('Animar Sol Automáticamente');
-    sunFolder.add(sunSettings, 'resetSunPosition').name('Reiniciar Posición del Sol');
+sunFolder.open();
+// ---------------------------------------------
 
-    sunFolder.open();
-
-    // --- Controles del Ambiente ---
-    environmentFolder = gui.addFolder('Controles de Ambiente');
-
-    environmentFolder.add(sunSettings, 'ambientIntensity', 0, 1).name('Intensidad Ambiental').onChange(val => {
-        ambient.intensity = val;
-    });
-    environmentFolder.addColor(sunSettings, 'skyColor').name('Color del Cielo').onChange(val => {
-        scene.background.set(val);
-    });
-    environmentFolder.addColor(sunSettings, 'fogColor').name('Color de Niebla').onChange(val => {
-        scene.fog.color.set(val);
-    });
-    environmentFolder.add(sunSettings, 'fogNear', 1, 150).name('Niebla Cercana').onChange(val => {
-        scene.fog.near = val;
-    });
-    environmentFolder.add(sunSettings, 'fogFar', 50, 500).name('Niebla Lejana').onChange(val => {
-        scene.fog.far = val;
-    });
-
-    // Presets de ambiente
-    const presets = {
-        Mañana: () => setSunPreset('morning'),
-        Tarde: () => setSunPreset('afternoon'),
-        Noche: () => setSunPreset('night'),
-    };
-
-    environmentFolder.add(presets, 'Mañana');
-    environmentFolder.add(presets, 'Tarde');
-    environmentFolder.add(presets, 'Noche');
-
-    environmentFolder.open();
-}
-
-function setSunPreset(mode) {
-    let newSunColor, newIntensity, newAngle, newPenumbra, newAmbientIntensity, newSkyColor, newFogColor;
-
-    switch (mode) {
-        case 'morning':
-            newSunColor = '#ffd59a'; // Naranja suave
-            newIntensity = 1.0;
-            newAngle = Math.PI / 4;
-            newPenumbra = 0.5;
-            newAmbientIntensity = 0.3;
-            newSkyColor = '#fff2d0'; // Luz cálida
-            newFogColor = '#fff2d0';
-            break;
-
-        case 'afternoon':
-            newSunColor = '#ffffff'; // Blanca intensa
-            newIntensity = 2.0;
-            newAngle = Math.PI / 5;
-            newPenumbra = 0.2;
-            newAmbientIntensity = 0.5;
-            newSkyColor = '#87ceeb'; // Celeste cielo
-            newFogColor = '#87ceeb';
-            break;
-
-        case 'night':
-            newSunColor = '#92aaff'; // Azul tenue
-            newIntensity = 0.3;
-            newAngle = Math.PI / 6;
-            newPenumbra = 0.8;
-            newAmbientIntensity = 0.1;
-            newSkyColor = '#0c1445'; // Noche
-            newFogColor = '#0c1445';
-            break;
-    }
-
-    // Update sunSettings object and then apply to Three.js objects
-    sunSettings.color = newSunColor;
-    sunSettings.intensity = newIntensity;
-    sunSettings.angle = newAngle;
-    sunSettings.penumbra = newPenumbra;
-    sunSettings.ambientIntensity = newAmbientIntensity;
-    sunSettings.skyColor = newSkyColor;
-    sunSettings.fogColor = newFogColor;
-
-    // Apply changes to Three.js objects
-    spotLight.color.set(sunSettings.color);
-    spotLight.intensity = sunSettings.intensity;
-    spotLight.angle = sunSettings.angle;
-    spotLight.penumbra = sunSettings.penumbra;
-    ambient.intensity = sunSettings.ambientIntensity;
-    scene.background.set(sunSettings.skyColor);
-    scene.fog.color.set(sunSettings.fogColor);
-
-    // Update dat.GUI display to reflect preset values
-    for (let i in sunFolder.__controllers) {
-        sunFolder.__controllers[i].updateDisplay();
-    }
-    for (let i in environmentFolder.__controllers) {
-        environmentFolder.__controllers[i].updateDisplay();
-    }
-}
-
+// 8. Función de animación/renderizado
 function animate() {
     requestAnimationFrame(animate);
 
-    // Órbita solar solo si autoAnimateSun es true
-    if (sunSettings.autoAnimateSun) {
-        time += 0.002;
-        const radius = 40;
-        const height = 20;
-        const x = radius * Math.cos(time);
-        const z = radius * Math.sin(time);
-        const y = height * Math.sin(time); // Simulates sun rising and setting
-
-        spotLight.position.set(x, y, z);
-    }
-    // No move spotLight.target.position.set(0,0,0) here, as it should stay fixed at the scene center.
-    spotLight.target.updateMatrixWorld(); // Keep the target updated
-
-    lightHelper.update(); // Important to update the helper when light changes
+    controls.update();
+    updateSun();
     renderer.render(scene, camera);
 }
 
-function onWindowResize() {
+// 9. Manejar el redimensionamiento de la ventana
+window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
-}
+});
+
+// Iniciar la animación
+animate();

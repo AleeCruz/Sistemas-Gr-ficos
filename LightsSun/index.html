@@ -1,13 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>Iluminacion</title>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three.js Plano y Cubo con Sol</title>
     <style>
-      body { margin: 0; }
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+        }
+
+        /* --- Estilos para dat.GUI --- */
+        .dg.ac {
+            /* Remueve la posición predeterminada de la derecha */
+            right: auto !important;
+            /* Establece la posición en la izquierda */
+            left: 0px !important; /* O left: 20px; si quieres un pequeño margen */
+        }
+        /* --------------------------- */
     </style>
-  </head>
-  <body>
+</head>
+<body>
     <script type="module" src="./src/main.js"></script>
-  </body>
+</body>
 </html>
