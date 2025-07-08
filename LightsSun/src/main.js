@@ -61,7 +61,7 @@ const sunFolder = gui.addFolder('Control Sol');
 
 // Parámetros para los controles del sol
 sunFolder.add(sunParams, 'orbitRadius', 1, 15).name('Radio Órbita');
-sunFolder.add(sunParams, 'orbitSpeed', 0.1, 6.0).name('Velocidad Órbita');
+sunFolder.add(sunParams, 'orbitSpeed', 0.1, 20.0).name('Velocidad Órbita');
 
 // --- NUEVOS CONTROLES PARA MOMENTOS DEL DÍA ---
 // Definir ángulos para cada momento del día (en radianes)
