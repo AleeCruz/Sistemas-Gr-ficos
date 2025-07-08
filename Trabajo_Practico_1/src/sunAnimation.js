@@ -27,10 +27,10 @@ export const sunSettings = {
 export function animateSun(spotLight, currentSunSettings) {
     if (currentSunSettings.autoAnimateSun) {
         time += 0.002;
-        const radius = 40;
+        const radius = 20;
         const height = 20; // Altura máxima del sol en la órbita
         const x = radius * Math.cos(time);
-        const z = radius * Math.sin(time);
+        const z = 0;
         const y = height * Math.sin(time); // Simula el ascenso y descenso del sol
 
         spotLight.position.set(x, y, z);

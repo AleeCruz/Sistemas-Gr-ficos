@@ -120,6 +120,7 @@ function setSunPreset(mode, spotLight, ambientLight, scene, sharedSunSettings) {
     sharedSunSettings.fogColor = newFogColor;
     sharedSunSettings.fogNear = newFogNear;
     sharedSunSettings.fogFar = newFogFar;
+    
 
 
     // Aplicar los cambios a los objetos de Three.js

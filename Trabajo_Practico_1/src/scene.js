@@ -118,13 +118,13 @@ for (let i = 0; i < cantidadLamparas; i++) {
   // Lámpara derecha (offset positivo)
   const lamparaDerecha = lamparaBase.clone();
   lamparaDerecha.position.copy(pos.clone().add(normal.clone().multiplyScalar(distanciaAlCostado)));
-  lamparaDerecha.scale.set(0.5, 0.5, 0.5);
+  lamparaDerecha.scale.set(0.3, 0.3, 0.3);
   scene.add(lamparaDerecha);
 
   // Lámpara izquierda (offset negativo)
   const lamparaIzquierda = lamparaBase.clone();
   lamparaIzquierda.position.copy(pos.clone().add(normal.clone().multiplyScalar(-distanciaAlCostado)));
-  lamparaIzquierda.scale.set(0.5, 0.5, 0.5);
+  lamparaIzquierda.scale.set(0.3, 0.3, 0.3);
   scene.add(lamparaIzquierda);
 }
 
