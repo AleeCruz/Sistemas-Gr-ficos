@@ -18,7 +18,7 @@ export function createIlluminationSun(scene, initialOrbitRadius, initialOrbitSpe
 
     // Crear el "sol" (esfera con luz)
     const sunGeometry = new THREE.SphereGeometry(0.5, 32, 32);
-    const sunMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 1 });
+    const sunMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
     const sun = new THREE.Mesh(sunGeometry, sunMaterial);
     scene.add(sun);
 
