@@ -13,7 +13,7 @@ export function crearCuadradoBarridoGirandoParametrico(
   rotacionTotalRad = (3 * Math.PI) / 4,
   color = 0xffffff,
   wireframe = false,
-  texturaURL = "textures/ventana5.jpg",
+  texturaURL = "textures/ventana1.png",
   repetirUV_X = 3,
   repetirUV_Y = 6
 ) {

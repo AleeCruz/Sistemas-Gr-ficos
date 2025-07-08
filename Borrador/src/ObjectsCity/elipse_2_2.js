@@ -8,9 +8,9 @@ export function crearElipse_Parametric_2(
   segmentsU = 60,
   segmentsV = 30,
   color = 0x7FFFD4,
-  texturaURL = "textures/ventana8.jpg", // ¡Ahora puedes pasar una URL de textura!
-  repetirU = 1,      // Repeticiones en dirección horizontal (alrededor de la elipse)
-  repetirV = 1       // Repeticiones en dirección vertical (a lo largo de la altura)
+  texturaURL = "textures/ventana3.png", // ¡Ahora puedes pasar una URL de textura!
+  repetirU = 3,      // Repeticiones en dirección horizontal (alrededor de la elipse)
+  repetirV = 4       // Repeticiones en dirección vertical (a lo largo de la altura)
 ) {
   // --- Función paramétrica para el cuerpo ---
   const parametricFunction = (u, v, target) => {

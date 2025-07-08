@@ -7,22 +7,20 @@ import { ParametricGeometry } from 'three/examples/jsm/geometries/ParametricGeom
  */
 export function crearHexagonoEscaladoBarridoParametrico(
   radio = 0.35,
-  altura = 2.35,
+  altura = 2.55,
   pasosAltura = 40,
   pasosContorno = 10,
   escalaMaxima = 0.68,
   color = 0xff4500,
   wireframe = false,
-  texturaURL = "textures/ventana7.jpg",   // <-- NUEVO: URL de la textura
-  repetirUV_X = 1,     // <-- NUEVO: Repeticiones en U (alrededor del perímetro)
-  repetirUV_Y = 1      // <-- NUEVO: Repeticiones en V (a lo largo de la altura)
+  texturaURL = "textures/ventana4.png",   // <-- NUEVO: URL de la textura
+  repetirUV_X = 2,     // <-- NUEVO: Repeticiones en U (alrededor del perímetro)
+  repetirUV_Y = 2.5      // <-- NUEVO: Repeticiones en V (a lo largo de la altura)
 ) {
   const lados = 6;
   const anguloPaso = (2 * Math.PI) / lados;
 
   // Función paramétrica: u (0 a 1 en altura), v (0 a 1 en contorno)
-  // Renombramos 'u' a 'v_contorno' y 'v' a 'u_altura' para mayor claridad
-  // Ya que ParametricGeometry usa el primer parámetro para 'u' y el segundo para 'v'.
   const superficieParametrica = (v_contorno, u_altura, target) => {
     const t = u_altura; // 't' representa la proporción de la altura recorrida (0 a 1)
     const y = t * altura - 0.35; // Tu ajuste de la base
@@ -51,8 +49,6 @@ export function crearHexagonoEscaladoBarridoParametrico(
   };
 
   // --- Geometría del cuerpo lateral ---
-  // ParametricGeometry genera automáticamente las UVs (u, v) de 0 a 1 para el cuerpo.
-  // 'u' corresponderá a v_contorno (horizontal) y 'v' a u_altura (vertical).
   const cuerpo = new ParametricGeometry(superficieParametrica, pasosContorno, pasosAltura);
   cuerpo.computeVertexNormals();
 
@@ -60,15 +56,15 @@ export function crearHexagonoEscaladoBarridoParametrico(
   let material;
   if (texturaURL) {
     const texture = new THREE.TextureLoader().load(texturaURL);
-    texture.wrapS = THREE.RepeatWrapping; // Permite la repetición horizontal
-    texture.wrapT = THREE.RepeatWrapping; // Permite la repetición vertical
-    texture.repeat.set(repetirUV_X, repetirUV_Y); // Aplica el número de repeticiones
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(repetirUV_X, repetirUV_Y);
 
     material = new THREE.MeshStandardMaterial({
-      map: texture, // Usa la textura
-      side: THREE.DoubleSide, // Renderiza ambos lados
-      flatShading: false, // Generalmente se ve mejor para texturas
-      metalness: 0.4, // Mantienes tus propiedades de metalness/roughness
+      map: texture,
+      side: THREE.DoubleSide,
+      flatShading: false,
+      metalness: 0.4,
       roughness: 0.5,
       wireframe: wireframe,
     });
@@ -85,73 +81,52 @@ export function crearHexagonoEscaladoBarridoParametrico(
 
   const mallaCuerpo = new THREE.Mesh(cuerpo, material);
 
-  // 🔽 Crear tapas (inferior y superior) con UVs
-  const crearTapa = (y, currentRadius, invertida = false) => { // currentRadius es el radio del hexágono en esa tapa
-    const vertices = []; // Puntos del contorno
-    const posiciones = []; // Array para los atributos de posición
-    const uvs = [];         // Array para los atributos UV
+  // 🔽 Crear tapas (inferior y superior) con UVs corregidos
+const crearTapa = (y, currentRadius, invertida = false, colorTapa = 0x333333) => {
+  const materialTapa = new THREE.MeshStandardMaterial({
+    color: colorTapa,
+    side: THREE.DoubleSide,
+    metalness: 0.3,
+    roughness: 0.6
+  });
 
-    const center = new THREE.Vector3(0, y, 0); // Centro de la tapa
-    posiciones.push(center.x, center.y, center.z);
-    uvs.push(0.5 * repetirUV_X, 0.5 * repetirUV_Y); // UV del centro de la tapa
+  const vertices = [];
+  const indices = [];
+  const center = new THREE.Vector3(0, y, 0);
+  vertices.push(center.x, center.y, center.z);
 
-    // Generar vértices del hexágono para el contorno de la tapa
-    for (let i = 0; i < lados; i++) {
-      const ang = i * anguloPaso;
-      const x = Math.cos(ang) * currentRadius; // Usar currentRadius para la escala de la tapa
-      const z = Math.sin(ang) * currentRadius;
-      vertices.push(new THREE.Vector3(x, y, z));
-      posiciones.push(x, y, z);
+  for (let i = 0; i < lados; i++) {
+    const angle = i * anguloPaso;
+    const x = Math.cos(angle) * currentRadius;
+    const z = Math.sin(angle) * currentRadius;
+    vertices.push(x, y, z);
+  }
 
-      // Calcular UVs para los puntos del contorno
-      // Normalizar la posición (x,z) dentro del cuadrado que encierra la tapa
-      // Asumiendo que el centro (0,0) de la tapa se mapea a (0.5, 0.5) de la textura.
-      // Y los bordes van de -currentRadius a +currentRadius.
-      const u_coord = (x / currentRadius) * 0.5 + 0.5; // Mapea de [-1,1] a [0,1]
-      const v_coord = (z / currentRadius) * 0.5 + 0.5; // Mapea de [-1,1] a [0,1]
-      uvs.push(u_coord * repetirUV_X, v_coord * repetirUV_Y);
+  for (let i = 1; i <= lados; i++) {
+    const a = 0;
+    const b = i;
+    const c = (i % lados) + 1;
+    if (invertida) {
+      indices.push(a, c, b);
+    } else {
+      indices.push(a, b, c);
     }
+  }
 
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute('position', new THREE.Float32BufferAttribute(posiciones, 3));
-    geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2)); // Asignar UVs a la tapa
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
 
-    // Crear índices para la triangulación desde el centro
-    const indices = [];
-    for (let i = 1; i <= lados; i++) {
-      const a = 0; // Índice del centro
-      const b = i; // Índice del primer vértice del segmento (en `posiciones`)
-      const c = (i % lados) + 1; // Índice del segundo vértice del segmento (en `posiciones`)
-      if (invertida) {
-        indices.push(a, c, b); // Orden invertido para la normal de la tapa
-      } else {
-        indices.push(a, b, c);
-      }
-    }
+  return new THREE.Mesh(geometry, materialTapa);
+};
 
-    geometry.setIndex(indices);
-    geometry.computeVertexNormals();
 
-    return new THREE.Mesh(geometry, material);
-  };
-
-  // Calcular las escalas de las tapas para que coincidan con la forma del cuerpo
-  // La escala en t=0 (base) es 1 - (1 - escalaMaxima) * sin(0) = 1
   const scaleBase = 1;
-  // La escala en t=1 (cima) es 1 - (1 - escalaMaxima) * sin(PI) = 1
-  // Ojo: si quieres que la tapa superior tenga la escala del punto más "estrecho"
-  // de tu sinusoide, deberías calcular 't' para ese punto.
-  // Tu fórmula de escala: 1 - (1 - escalaMaxima) * Math.sin(Math.PI * t)
-  // El mínimo de sin(PI*t) es cuando PI*t = PI/2, es decir t = 0.5
-  const scaleTop = 1 - (1 - escalaMaxima) * Math.sin(Math.PI * 1); // En t=1 (arriba)
+  const scaleTop = 1 - (1 - escalaMaxima) * Math.sin(Math.PI * 1);
 
-  // Si quieres que la tapa superior tenga el tamaño del punto de 'escalaMaxima'
-  // const scaleMinPoint = escalaMaxima;
-  // const tapaSuperior = crearTapa(altura - 0.35, radio * scaleMinPoint, false);
-  // Pero con tu fórmula de seno, la escala en la cima vuelve a ser 1.
-  const tapaInferior = crearTapa(-0.35, radio * scaleBase, true); // La escala de la base es radio * 1
-  const tapaSuperior = crearTapa(altura - 0.35, radio * scaleTop, false); // La escala de la cima es radio * 1 (por sin(PI))
-
+  const tapaInferior = crearTapa(-0.35, radio * scaleBase, true);
+  const tapaSuperior = crearTapa(altura - 0.35, radio * scaleTop, true);
 
   // Agrupar cuerpo y tapas
   const grupo = new THREE.Group();

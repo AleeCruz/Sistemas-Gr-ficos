@@ -5,7 +5,7 @@ export function crearLamparaCalle() {
 
   // Poste vertical (el "palo")
   const poste = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.05, 0.05, 3, 6), // Radio, radio, altura, y menos segmentos para más simplicidad
+    new THREE.CylinderGeometry(0.09, 0.09, 3, 6), // Radio, radio, altura, y menos segmentos para más simplicidad
     new THREE.MeshStandardMaterial({ color: 0x222222, flatShading: true }) // flatShading para un aspecto más "básico"
   );
   poste.position.y = 1.5; // Coloca la base en Y=0

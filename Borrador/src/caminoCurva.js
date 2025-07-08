@@ -1,64 +1,84 @@
-// caminoCurva.js
-
 import * as THREE from 'three';
-import { scene } from './scene.js'; // Asegúrate de que esta ruta sea correcta
+import { scene } from './scene.js';
 import { ParametricGeometry } from 'three/examples/jsm/geometries/ParametricGeometry.js';
 import { crearCurva } from './curva.js'; // Importa la función crearCurva desde curva.js
 
-
-/**
- * Crea una geometría paramétrica que forma un "camino" o "calle" siguiendo una curva.
- * @returns {{malla: THREE.Mesh, curva: THREE.CatmullRomCurve3}} Un objeto que contiene la malla del camino y la curva utilizada.
- */
 function crearCalleConParametricGeometry() {
-  // Ahora obtenemos la curva desde el módulo curva.js
   const curva = crearCurva();
 
-  const ancho = 0.7; // Ancho de la "calle"
+  const ancho = 0.7;
   const superficieParametrica = (u, v, target) => {
-    // 'u' va de 0 a 1 a lo largo de la curva.
-    // 'v' va de 0 a 1 a través del ancho del camino.
-    const p = curva.getPointAt(u); // Punto en la curva para el valor 'u'
-    const tangente = curva.getTangentAt(u); // Tangente a la curva en 'u'
-
-    // Creamos un vector "normal" que apunta hacia arriba (eje Y).
-    // Esto se usa para calcular el vector binormal que nos dará la dirección perpendicular al camino para el ancho.
+    const p = curva.getPointAt(u);
+    const tangente = curva.getTangentAt(u);
     const normal = new THREE.Vector3(0, 1, 0);
     const binormal = new THREE.Vector3();
-    binormal.crossVectors(normal, tangente).normalize(); // Calcula la binormal
+    binormal.crossVectors(normal, tangente).normalize();
 
-    // Desplazamos el punto 'p' perpendicularmente a la curva para crear el ancho del camino.
-    // (v - 0.5) centra el desplazamiento alrededor de la curva (de -0.5*ancho a +0.5*ancho).
     const desplazamiento = binormal.multiplyScalar((v - 0.5) * ancho);
     const puntoFinal = new THREE.Vector3().copy(p).add(desplazamiento);
 
-    // Asignamos las coordenadas al 'target' (el vector que ParametricGeometry espera).
-    // Sumamos 0.02 a la 'y' para que la calle esté ligeramente por encima del "suelo" si tienes un plano en y=0.
     target.set(puntoFinal.x, puntoFinal.y + 0.02, puntoFinal.z);
   };
 
-  const pasosU = 200; // Número de segmentos a lo largo de la curva (mayor = más suave)
-  const pasosV = 4;   // Número de segmentos a lo ancho del camino (define la resolución del ancho)
+  const pasosU = 400; // Segmentos a lo largo de la curva
+  const pasosV = 4;   // Segmentos a lo ancho de la calle
 
   const geometry = new ParametricGeometry(superficieParametrica, pasosU, pasosV);
+
+  // --- 1. Cargar la textura ---
+  const textureLoader = new THREE.TextureLoader();
+  const texturaAsfalto = textureLoader.load('textures/asfalto.jpg');
+
+  // Ajusta cómo se repite la textura
+  texturaAsfalto.wrapS = THREE.RepeatWrapping; // Repetir horizontalmente
+  texturaAsfalto.wrapT = THREE.RepeatWrapping; // Repetir verticalmente
+
+  // Estos valores determinan cuántas veces se repite la textura.
+  // Ajusta 'repeatX' para la repetición a lo ancho de la calle.
+  // Ajusta 'repeatY' para la repetición a lo largo de la calle.
+  // La longitud de la curva y el ancho de la calle influyen aquí.
+  // Un buen punto de partida es un valor pequeño para el ancho y uno más grande para el largo.
+  const repeatX = 1; // La textura de asfalto generalmente cubre el ancho de la calle una vez o un par de veces
+  const repeatY = 50; // La textura se repetirá 50 veces a lo largo de la calle. Ajusta según la longitud de tu curva.
+  
+  texturaAsfalto.repeat.set(repeatX, repeatY);
+
+texturaAsfalto.rotation = Math.PI / 2; // Rota la textura 90 grados (en radianes)
+
+  // Opcional: El punto de pivote de la rotación. Por defecto es (0,0), la esquina inferior izquierda.
+  // Para rotar alrededor del centro de la textura:
+  texturaAsfalto.center.set(0.5, 0.5); // Establece el centro de rotación en el centro de la textura
+
+
+
+
+  // --- 2. Asignar la textura al material ---
   const material = new THREE.MeshStandardMaterial({
-    color: 0x696969, // Color gris para la calle
-    side: THREE.DoubleSide, // Renderiza ambos lados del plano
-    flatShading: true,      // Aspecto más facetado
-    wireframe: false        // No muestra el esqueleto de la malla
+    map: texturaAsfalto, // ¡Aquí aplicamos la textura!
+    color: 0xffffff, // El color blanco permite que la textura se vea con sus colores originales
+    side: THREE.DoubleSide,
+    flatShading: true,
+    // wireframe: false // Puedes comentar o dejar esto, no afecta la textura
   });
 
-  const malla = new THREE.Mesh(geometry, material);
-  scene.add(malla); // Agrega la malla a la escena global importada
+  // --- 3. Ajustar UVs (Coordenadas de Textura) ---
+  // La ParametricGeometry ya crea UVs por defecto (u, v), que son perfectos para esto.
+  // u va de 0 a 1 a lo largo de la curva (simulando la longitud de la calle).
+  // v va de 0 a 1 a lo ancho de la calle.
+  // Solo necesitamos asegurarnos de que el material repita la textura correctamente.
+  // No se requiere código adicional para los UVs aquí, ya que ParametricGeometry los maneja bien.
+  // Las propiedades `wrapS` y `wrapT` junto con `repeat.set()` en la textura son clave.
 
-  return { malla, curva }; // Retorna la malla y la curva por si se necesitan en otro lugar
+
+  const malla = new THREE.Mesh(geometry, material);
+  scene.add(malla);
+
+  return { malla, curva };
 }
 
-// Llama a la función para crear la calle y desestructura los resultados.
 const { malla, curva: catmullRomCurve } = crearCalleConParametricGeometry();
 
-// Exporta la curva y la malla para que puedan ser usadas en otros módulos.
 export {
   catmullRomCurve,
-  malla as mallaSuperficie, // Exporta la malla con un alias más descriptivo
+  malla as mallaSuperficie,
 };

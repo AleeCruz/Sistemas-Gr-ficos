@@ -8,8 +8,8 @@ export function crearElipse_Parametric(
   segmentsU = 64,
   segmentsV = 30,
   color = 0xDAA520,
-  texturaURL = 'textures/image.png',
-  repeticionesY = 2
+  texturaURL = 'textures/ventana2.png',
+  repeticionesY = 2.6
 ) {
   // --- Función paramétrica para el cuerpo ---
   const parametricFunction = (u, v, target) => {
@@ -55,27 +55,55 @@ export function crearElipse_Parametric(
   const mesh = new THREE.Mesh(geometry, material);
 
   // --- Crear tapas ---
-  const crearTapa = (y, rotX) => {
-    const circleGeo = new THREE.CircleGeometry(1, segmentsU);
-    circleGeo.scale(radiusX, radiusY, 1);
+ // Crear material para las tapas (color plano)
+const materialTapa = new THREE.MeshStandardMaterial({
+  color: 0x333333, // Puedes cambiarlo por otro si querés
+  side: THREE.DoubleSide,
+  metalness: 0.3,
+  roughness: 0.6
+});
 
-    const pos = circleGeo.attributes.position.array;
-    const uvsTapa = [];
-    for (let i = 0; i < pos.length; i += 3) {
-      const x = pos[i] / radiusX;
-      const z = pos[i + 2] / radiusY;
-      uvsTapa.push(0.5 + x * 0.5, 0.5 + z * 0.5); // mapeo radial
+// Reemplazamos crearTapa con esta versión corregida (sin textura)
+const crearTapa = (y, invertida = false) => {
+  const vertices = [];
+  const indices = [];
+
+  const center = new THREE.Vector3(0, y, 0);
+  vertices.push(center.x, center.y, center.z);
+
+  for (let i = 0; i <= segmentsU; i++) {
+    const theta = (i / segmentsU) * 2 * Math.PI;
+    const x = radiusX * Math.cos(theta);
+    const z = radiusY * Math.sin(theta);
+    vertices.push(x, y, z);
+  }
+
+  for (let i = 1; i <= segmentsU; i++) {
+    const a = 0;
+    const b = i;
+    const c = i + 1;
+    if (i === segmentsU) {
+      indices.push(a, b, 1); // Cierra el último triángulo
+    } else {
+      if (invertida) {
+        indices.push(a, c, b);
+      } else {
+        indices.push(a, b, c);
+      }
     }
-    circleGeo.setAttribute('uv', new THREE.Float32BufferAttribute(uvsTapa, 2));
+  }
 
-    const tapa = new THREE.Mesh(circleGeo, material);
-    tapa.rotation.x = rotX;
-    tapa.position.y = y;
-    return tapa;
-  };
+  const geom = new THREE.BufferGeometry();
+  geom.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+  geom.setIndex(indices);
+  geom.computeVertexNormals();
 
-  const meshBottom = crearTapa(-0.35, -Math.PI / 2);
-  const meshTop = crearTapa(altura, Math.PI / 2);
+  return new THREE.Mesh(geom, materialTapa);
+};
+
+// Crear tapas
+const meshBottom = crearTapa(-0.35, false);
+const meshTop = crearTapa(altura, true);
 
   // --- Grupo final ---
   const group = new THREE.Group();
