@@ -1,14 +1,19 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { PhysicsSimulator } from './PhysicsSimulator.js'; // Asegúrate que esta ruta es correcta
+import { PhysicsSimulator } from './PhysicsSimulator.js';
 import Stats from 'three/addons/libs/stats.module.js';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'; // Importa el GLTFLoader
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 let camera, scene, renderer, stats;
 let controls;
 let physicsSimulator;
-let chassisMesh; // La malla 3D de tu auto (el GLB)
-let wheelMeshes = []; // Las mallas 3D de las ruedas, si el GLB las incluye separadas
+let chassisMesh; // El grupo que contiene el modelo GLB del auto
+let wheelMeshes = []; // Array para las mallas 3D de las ruedas
+let groundMesh; // Referencia a la malla del suelo visual
+
+// Offset visual para el modelo del coche, si su pivote no coincide con el chasis físico
+// Ajusta este valor según la geometría de tu modelo GLB y el chasis de Rapier
+const CAR_MODEL_Y_OFFSET = -0.5; // Ejemplo: si el modelo necesita moverse 0.5 unidades hacia abajo
 
 async function setupThree() {
     scene = new THREE.Scene();
@@ -16,40 +21,49 @@ async function setupThree() {
 
     camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 10000);
     camera.position.set(30, 30, 30);
-    camera.lookAt(0, 0, 0); // Asegura que la cámara mire al origen
+    camera.lookAt(0, 2, 0); // Ajusta para mirar al centro del auto
 
     const ambient = new THREE.HemisphereLight(0x555555, 0xffffff, 2);
     scene.add(ambient);
 
     const light = new THREE.DirectionalLight(0xffffff, 2);
     light.position.set(0, 12.5, 12.5);
+    light.castShadow = true; // Activa las sombras para esta luz
+    light.shadow.mapSize.width = 1024; // Resolución del mapa de sombras
+    light.shadow.mapSize.height = 1024;
+    light.shadow.camera.near = 0.5;
+    light.shadow.camera.far = 50;
     scene.add(light);
 
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true; // Habilita los mapas de sombras en el renderizador
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Tipo de mapa de sombras
 
     document.body.appendChild(renderer.domElement);
 
     controls = new OrbitControls(camera, renderer.domElement);
-    controls.target = new THREE.Vector3(0, 2, 0);
+    controls.target = new THREE.Vector3(0, 2, 0); // Centro de atención de la cámara
     controls.update();
 
-    const geometry = new THREE.PlaneGeometry(1000, 1000, 1, 1);
-    geometry.rotateX(-Math.PI / 2);
-    const material = new THREE.MeshPhongMaterial({ color: 0x999999 });
+    // Crear el suelo visual, usando los parámetros de PhysicsSimulator
+    // Esto asegura que el suelo visual coincida con el suelo físico
+    const groundGeometry = new THREE.PlaneGeometry(1000, 1000, 1, 1); // Ancho y largo del suelo
+    groundGeometry.rotateX(-Math.PI / 2);
+    const groundMaterial = new THREE.MeshPhongMaterial({ color: 0x999999 });
 
-    const ground = new THREE.Mesh(geometry, material);
+    groundMesh = new THREE.Mesh(groundGeometry, groundMaterial);
+    groundMesh.receiveShadow = true; // El suelo puede recibir sombras
+    scene.add(groundMesh);
 
     new THREE.TextureLoader().load('maps/grid.png', function (texture) {
         texture.wrapS = THREE.RepeatWrapping;
         texture.wrapT = THREE.RepeatWrapping;
-        texture.repeat.set(200, 200);
-        ground.material.map = texture;
-        ground.material.needsUpdate = true;
+        texture.repeat.set(200, 200); // Ajusta la repetición de la textura
+        groundMesh.material.map = texture;
+        groundMesh.material.needsUpdate = true;
     });
-
-    scene.add(ground);
 
     let axesHelper = new THREE.AxesHelper(5);
     scene.add(axesHelper);
@@ -62,15 +76,13 @@ async function setupThree() {
 }
 
 async function initPhysics() {
-    // Parámetros del vehículo. Asegúrate que `initialPosition` sea consistente
-    // con donde quieres que aparezca el modelo 3D.
     const vehicleParams = {
         wheelSeparation: 2.5,
         axesSeparation: 3,
         wheelRadius: 0.6,
         wheelWidth: 0.4,
         suspensionRestLength: 0.8,
-        initialPosition: new THREE.Vector3(0, 4, 0), // Elevado para evitar que caiga a través del suelo
+        initialPosition: new THREE.Vector3(0, 4, 0), // Posición de inicio del chasis físico
         initialYRotation: 0,
         steeringReaction: 0.1,
         maxSteeringAngle: Math.PI / 16,
@@ -79,105 +91,113 @@ async function initPhysics() {
         brakeForce: { min: 0, max: 1, step: 0.05 },
     };
 
-
-    
-    // Parámetros del suelo. Deben coincidir con tu plano visual.
     const groundParams = {
         width: 1000,
-        height: 0.1,
+        height: 0.1, // Altura del cuerpo físico (puede ser pequeña si el suelo visual ya está en Y=0)
         length: 1000,
     };
 
     physicsSimulator = new PhysicsSimulator(vehicleParams, groundParams);
     await physicsSimulator.initSimulation();
 
-    // Ahora creamos y enlazamos el modelo de auto GLB
-    await createCarModel(); // Llamamos y esperamos a que el modelo GLB se cargue
+    await createCarModel();
 
     // --- Obstáculos ---
-    // Cylinder obstacle
-    const cylinderGeometry = new THREE.CylinderGeometry(2, 2, 16, 16);
-    cylinderGeometry.translate(0, 0, 0); // Mueve la geometría para que el pivote esté en la base
+    // Cilindro
+    const cylinderRadius = 2;
+    const cylinderHeight = 16;
+    const cylinderGeometry = new THREE.CylinderGeometry(cylinderRadius, cylinderRadius, cylinderHeight, 16);
+    // Traslada la geometría para que su base esté en Y=0 (su centro estará en Y=height/2)
+    cylinderGeometry.translate(0, cylinderHeight / 2, 0);
     const cylinderMaterial = new THREE.MeshPhongMaterial({ color: '#666699' });
     const column = new THREE.Mesh(cylinderGeometry, cylinderMaterial);
-    column.position.set(-10, 5, 0); // Posición final del cilindro, con y=5 para su mitad de altura
+    column.position.set(-10, 0, 0); // La base del cilindro estará en Y=0
+    column.castShadow = true;
+    column.receiveShadow = true;
     scene.add(column);
-    physicsSimulator.addRigidBody(column, 200, 0); // Masa 100 para que sea un obstáculo pesado
+    physicsSimulator.addRigidBody(column, 200, 0.5); // Masa y restitución
 
-    // Ramp obstacle (BoxGeometry)
-    const rampGeometry = new THREE.BoxGeometry(10, 1, 20);
+    // Rampa (BoxGeometry)
+    const rampWidth = 10;
+    const rampHeight = 1;
+    const rampLength = 20;
+    const rampGeometry = new THREE.BoxGeometry(rampWidth, rampHeight, rampLength);
+    // Traslada la geometría para que su base esté en Y=0 (su centro estará en Y=height/2)
+    rampGeometry.translate(0, rampHeight / 2, 0);
     const rampMaterial = new THREE.MeshPhongMaterial({ color: 0x999999 });
     const ramp = new THREE.Mesh(rampGeometry, rampMaterial);
-    ramp.position.set(0, 0.5, -30); // Posición inicial para que la base toque el suelo
+    ramp.position.set(0, 0, -30); // La base de la rampa estará en Y=0
     ramp.rotation.x = Math.PI / 12; // Inclinación
+    ramp.castShadow = true;
+    ramp.receiveShadow = true;
     scene.add(ramp);
-    physicsSimulator.addRigidBody(ramp, 0); // Masa 0 para que sea estática
+    physicsSimulator.addRigidBody(ramp, 0, 0.5); // Masa 0 para que sea estática
 }
 
 async function createCarModel() {
     const loader = new GLTFLoader();
-
     try {
         const gltf = await loader.loadAsync('/modelos/car_model.glb');
 
-        // 🔍 Creamos un contenedor para controlar posición y rotación fácilmente
-        const root = new THREE.Group();
-
-        // 📦 Este es el modelo completo del GLB
         const model = gltf.scene;
 
-        // ✅ Escalamos el modelo (ajustalo si es muy chico/grande)
-        model.scale.set(0.005, 0.005, 0.005);
+        // Escalamos el modelo (ajustalo si es muy chico/grande)
+        // La escala debe coincidir con el tamaño de tu chasis físico (2x0.1x4)
+        model.scale.set(0.005, 0.005, 0.005); // Ajusta esto para que el modelo se vea bien con el chasis de Rapier
 
-        // 🔁 Rotamos si es necesario (180° en Y para mirar hacia -Z)
+        // Rotamos si es necesario (180° en Y para que el frente del auto mire hacia -Z)
         model.rotation.y = Math.PI;
 
-        // 🧠 Activamos sombras (opcional, pero recomendado si usás luces reales)
+        // Habilita sombras para todas las mallas del modelo
         model.traverse((child) => {
             if (child.isMesh) {
                 child.castShadow = true;
                 child.receiveShadow = true;
 
-                // 🪟 Arreglamos materiales de ventanas si son transparentes
+                // Ajustes para materiales transparentes (ej. ventanas)
                 if (child.material && child.material.opacity < 1) {
                     child.material.transparent = true;
-                    child.material.depthWrite = false;
-                    child.material.opacity = Math.max(child.material.opacity, 0.5);
+                    child.material.depthWrite = false; // Importante para transparencias
+                    child.material.opacity = Math.max(child.material.opacity, 0.5); // Evita que sean demasiado invisibles
                 }
             }
         });
 
-        // 🎯 Añadimos el modelo al contenedor
-        root.add(model);
+        // Creamos un grupo (THREE.Group) que contendrá el modelo GLB
+        // Este grupo será el que sincronicemos con el chasis físico
+        // y le aplicaremos el offset visual si es necesario.
+        chassisMesh = new THREE.Group();
+        chassisMesh.add(model);
+        chassisMesh.position.y = CAR_MODEL_Y_OFFSET; // Aplica el offset visual una sola vez
 
-        // 📌 Ajustamos el offset si el modelo se ve flotando o hundido
-        root.position.y = -0.5; // Este valor puede variar según tu GLB
-
-        // 🧭 Helper para ver la orientación del auto
+        // Helper para ver la orientación del auto (opcional)
         const axes = new THREE.AxesHelper(2);
-        root.add(axes);
+        chassisMesh.add(axes);
 
-        // ➕ Añadimos el modelo a la escena
-        scene.add(root);
+        scene.add(chassisMesh);
 
-        // 💾 Guardamos referencia para sincronizar con la física
-        chassisMesh = root;
-
-        // 🛞 OPCIONAL: Si querés luego controlar las ruedas, buscás los objetos así:
+        // Opcional: Buscar los meshes de las ruedas dentro del modelo GLB
+        // Si tu modelo tiene las ruedas como objetos separados y quieres sincronizarlas individualmente
+        // Asegúrate que los nombres 'Wheel_FL', etc. coincidan con los nombres reales en tu GLB
         /*
-        wheelMeshes[0] = model.getObjectByName('WheelFL'); // delantero izquierdo
-        wheelMeshes[1] = model.getObjectByName('WheelFR'); // delantero derecho
-        wheelMeshes[2] = model.getObjectByName('WheelRL'); // trasero izquierdo
-        wheelMeshes[3] = model.getObjectByName('WheelRR'); // trasero derecho
+        wheelMeshes[0] = model.getObjectByName('Wheel_RL'); // Trasera izquierda
+        wheelMeshes[1] = model.getObjectByName('Wheel_RR'); // Trasera derecha
+        wheelMeshes[2] = model.getObjectByName('Wheel_FL'); // Delantera izquierda
+        wheelMeshes[3] = model.getObjectByName('Wheel_FR'); // Delantera derecha
+
+        if (wheelMeshes.some(mesh => !mesh)) {
+            console.warn("No se encontraron todas las mallas de las ruedas en el modelo GLB. Sincronización visual de ruedas limitada.");
+            // Si no encuentras las mallas de las ruedas, puedes crear cilindros placeholders aquí
+            // o simplemente omitir la actualización de ruedas individuales.
+        }
         */
 
-        console.log("Modelo cargado correctamente");
+        console.log("Modelo de coche GLB cargado y listo.");
 
     } catch (error) {
         console.error('Error al cargar el modelo GLB:', error);
     }
 }
-
 
 function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
@@ -186,57 +206,59 @@ function onWindowResize() {
 }
 
 function updateVehicleTransforms() {
-    // Sincroniza la posición y rotación del modelo GLB con el cuerpo físico del chasis
+    // Sincroniza la posición y rotación del grupo del modelo GLB con el cuerpo físico del chasis
     const vehicleTransform = physicsSimulator.getVehicleTransform();
     if (chassisMesh && vehicleTransform) {
-        // Aplica la posición y rotación del cuerpo físico al chasis visual
-        // ¡Importante! Aquí debes añadir el offset visual si lo usaste en createCarModel
-        chassisMesh.position.set(vehicleTransform.position.x, vehicleTransform.position.y, vehicleTransform.position.z);
-        chassisMesh.quaternion.set(vehicleTransform.quaternion.x, vehicleTransform.quaternion.y, vehicleTransform.quaternion.z, vehicleTransform.quaternion.w);
+        // Aplica directamente la posición y rotación del cuerpo físico al grupo (chassisMesh)
+        chassisMesh.position.copy(vehicleTransform.position);
+        chassisMesh.quaternion.copy(vehicleTransform.quaternion);
 
-        // Después de aplicar la posición y rotación del chasis,
-        // ajusta de nuevo el offset si tu modelo GLB lo necesita.
-        // Esto es necesario porque el `position` de Three.js es absoluto para el objeto,
-        // pero tu offset es relativo al "chasis" interno de Rapier.
-        chassisMesh.position.y += -0.5; // Ajusta este offset según lo que uses en createCarModel
-
-        // Actualiza las posiciones y rotaciones de las mallas de las ruedas (si las tienes separadas)
-        wheelMeshes.forEach((wheel, index) => {
-            const wheelTransform = physicsSimulator.getWheelTransform(index);
-            if (wheelTransform) {
-                // Las posiciones de las ruedas en RapierPhysics son relativas al chasis
-                // Si wheel es hijo de chassisMesh, esto es correcto
-                wheel.position.set(wheelTransform.position.x, wheelTransform.position.y, wheelTransform.position.z);
-                wheel.quaternion.set(wheelTransform.quaternion.x, wheelTransform.quaternion.y, wheelTransform.quaternion.z, wheelTransform.quaternion.w);
-            }
-        });
+        // Nota: El CAR_MODEL_Y_OFFSET ya se aplicó una sola vez al `chassisMesh` al crearlo.
+        // NO lo apliques de nuevo aquí, ya que la posición del chasis físico ya está calculada.
     }
-}
 
-function animate() {
-    // Obtiene el tiempo delta para una simulación de física consistente
-    const deltaTime = 1 / 60; // Asumimos un paso fijo de 60 FPS, puedes usar THREE.Clock para precisión
+    // Actualiza las posiciones y rotaciones de las mallas de las ruedas (si las tienes separadas)
+    // Las posiciones de las ruedas en Rapier son relativas al chasis.
+    // Si tus mallas de ruedas son *hijos* del chassisMesh (el grupo que contiene el GLB),
+    // entonces simplemente aplica sus transformaciones relativas directamente.
+    wheelMeshes.forEach((wheel, index) => {
+        const wheelTransform = physicsSimulator.getWheelTransform(index);
+        if (wheel && wheelTransform) {
+            wheel.position.copy(wheelTransform.position);
+            wheel.quaternion.copy(wheelTransform.quaternion);
 
-    physicsSimulator.update(deltaTime); // Actualiza el mundo de la física con el tiempo delta
-    updateVehicleTransforms(); // Sincroniza las mallas visuales con la física
-
-    if (controls) controls.update(); // Actualiza los controles de órbita
-
-    renderer.render(scene, camera);
-    stats.update(); // Actualiza los Stats (FPS)
-}
-
-function start() {
-    setupThree().then(() => { // Asegura que setupThree se complete antes de initPhysics
-        initPhysics().then(() => {
-            // Una vez que Three.js y la física están listas, inicia el bucle de animación
-            renderer.setAnimationLoop(animate); // Usa setAnimationLoop para el bucle
-        }).catch(error => {
-            console.error("Error al inicializar la física:", error);
-        });
-    }).catch(error => {
-        console.error("Error al configurar Three.js:", error);
+            // Si tus mallas de ruedas no están orientadas correctamente (ej. cilindros mirando al lado),
+            // podrías necesitar una rotación adicional aquí.
+            // Ejemplo para un cilindro que es una rueda:
+            // wheel.rotation.z += Math.PI / 2;
+        }
     });
 }
 
+function animate() {
+    // Calcula el tiempo transcurrido desde el último frame para una simulación precisa
+    const deltaTime = 1 / 60; // Puedes usar THREE.Clock() para un deltaTime más preciso
+
+    if (physicsSimulator && physicsSimulator.initComplete) {
+        physicsSimulator.update(deltaTime); // Actualiza el mundo de la física
+        updateVehicleTransforms(); // Sincroniza las mallas visuales con la física
+    }
+
+    controls.update(); // Actualiza los controles de órbita
+    renderer.render(scene, camera);
+    stats.update(); // Actualiza el contador de FPS
+}
+
+// Inicia todo
 start();
+
+async function start() {
+    try {
+        await setupThree();
+        await initPhysics();
+        // Una vez que Three.js y la física están listas, inicia el bucle de animación
+        renderer.setAnimationLoop(animate);
+    } catch (error) {
+        console.error("Error fatal al iniciar la aplicación:", error);
+    }
+}
