@@ -10,7 +10,7 @@ export const defaultVehicleParams = {
     wheelRadius: 0.6,
     wheelWidth: 0.4,
     suspensionRestLength: 0.8,
-    initialPosition:new THREE.Vector3(0,4,0), // initial position of the vehicle
+    initialPosition:new THREE.Vector3(0,2,0), // initial position of the vehicle
     initialYRotation:0, // angle in radians
     steeringReaction:0.1, // how fast the steering reacts to input
     maxSteeringAngle: Math.PI / 16, // maximum steering angle in radians
@@ -90,7 +90,7 @@ export class PhysicsSimulator {
         
         geo = new THREE.BoxGeometry(gr.width, gr.height,gr.length);                
         const ground = new THREE.Mesh(geo, genericMaterial);   
-        ground.position.y = -0.80;     
+        ground.position.y = -1.3;     
         ground.userData.physics = { mass: 0 }; 
         
         this.physics.addMesh(ground);
@@ -109,6 +109,9 @@ export class PhysicsSimulator {
         this.addWheels();
         this.setupEventListeners();
         this.initComplete = true;
+        setTimeout(() => {
+            this.resetVehicle();
+        }, 2000);
     }
 
     addRigidBody(mesh, mass = 0, restitution = 0.8) {
