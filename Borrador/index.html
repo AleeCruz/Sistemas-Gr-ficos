@@ -1,16 +1,23 @@
-
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>My first three.js app</title>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proyecto con Auto</title>
     <style>
-      body { margin: 0; 
-             overflow:hidden }
-      canvas { display: block; }
+        body { margin: 0; overflow: hidden; }
+        canvas { display: block; }
     </style>
-  </head>
-  <body>
-    <script type="module" src="src/main.js"></script>
-  </body>
+</head>
+<body>
+    <script type="module">
+        import * as THREE from 'https://unpkg.com/three@0.165.0/build/three.module.js';
+        window.THREE = THREE; // Hacer THREE global para compatibilidad
+    </script>
+    <script type="module">
+        import { GLTFLoader } from 'https://unpkg.com/three@0.165.0/examples/jsm/loaders/GLTFLoader.js';
+        window.GLTFLoader = GLTFLoader; // Hacer GLTFLoader global
+    </script>
+    <script type="module" src="./main.js"></script>
+</body>
 </html>
