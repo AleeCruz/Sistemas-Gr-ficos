@@ -70,7 +70,7 @@ async function initPhysics() {
         wheelRadius: 0.6,
         wheelWidth: 0.4,
         suspensionRestLength: 0.8,
-        initialPosition: new THREE.Vector3(0, 3, 0), // Elevado para evitar que caiga a través del suelo
+        initialPosition: new THREE.Vector3(0, 4, 0), // Elevado para evitar que caiga a través del suelo
         initialYRotation: 0,
         steeringReaction: 0.1,
         maxSteeringAngle: Math.PI / 16,
@@ -102,7 +102,7 @@ async function initPhysics() {
     const column = new THREE.Mesh(cylinderGeometry, cylinderMaterial);
     column.position.set(-10, 5, 0); // Posición final del cilindro, con y=5 para su mitad de altura
     scene.add(column);
-    physicsSimulator.addRigidBody(column, 20, 0.8); // Masa 100 para que sea un obstáculo pesado
+    physicsSimulator.addRigidBody(column, 200, 0); // Masa 100 para que sea un obstáculo pesado
 
     // Ramp obstacle (BoxGeometry)
     const rampGeometry = new THREE.BoxGeometry(10, 1, 20);

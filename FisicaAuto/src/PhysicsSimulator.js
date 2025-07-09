@@ -10,7 +10,7 @@ export const defaultVehicleParams = {
     wheelRadius: 0.6,
     wheelWidth: 0.4,
     suspensionRestLength: 0.8,
-    initialPosition:new THREE.Vector3(0,3,0), // initial position of the vehicle
+    initialPosition:new THREE.Vector3(0,4,0), // initial position of the vehicle
     initialYRotation:0, // angle in radians
     steeringReaction:0.1, // how fast the steering reacts to input
     maxSteeringAngle: Math.PI / 16, // maximum steering angle in radians
