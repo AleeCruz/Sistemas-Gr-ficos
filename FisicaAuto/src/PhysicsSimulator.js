@@ -96,7 +96,7 @@ export class PhysicsSimulator {
         this.physics.addMesh(ground);
 
         // create chassis
-        geo = new THREE.BoxGeometry(2, 0.1, 4);
+        geo = new THREE.BoxGeometry(1, 0.05, 2);
         
         const chasisMesh = new THREE.Mesh(geo, genericMaterial);
         chasisMesh.position.copy(this.params.vehicle.initialPosition); 

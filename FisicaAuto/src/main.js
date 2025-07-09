@@ -70,7 +70,7 @@ async function setupThree() {
 
 async function initPhysics() {
     const vehicleParams = {
-        wheelSeparation: 2.0,
+        wheelSeparation: 2.5,
         axesSeparation: 3,
         wheelRadius: 0.6,
         wheelWidth: 0.4,
@@ -123,7 +123,7 @@ async function createCarModel() {
         const gltf = await loader.loadAsync('/modelos/car_model.glb');
         const model = gltf.scene;
 
-        model.scale.set(0.005, 0.005, 0.005);
+        model.scale.set(0.001, 0.001, 0.001);
         model.rotation.y = Math.PI;
 
         model.traverse(child => {
