@@ -21,8 +21,8 @@ let spotLight, ambientLight;
 generarObjetosSinSuperposicion({
     curve: catmullRomCurve,
     streetWidth: 0.5,
-    gridSize: 15,
-    gridDivision: 15,
+    gridSize: 20,
+    gridDivision: 20,
 });
 
 // --- Crear curva principal y mostrarla ---
