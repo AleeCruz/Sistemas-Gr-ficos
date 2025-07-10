@@ -7,69 +7,65 @@ export class CameraManager {
     constructor(domElement, initialCamera) {
         const aspect = window.innerWidth / window.innerHeight;
 
-        // Cámara perspectiva para modo 1 (OrbitControls)
         this.cameraPersp = initialCamera; 
-
-        // Cámara perspectiva para modo 2 (Free walk) con PointerLock
         this.cameraFreeWalk = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
         this.cameraFreeWalk.position.set(0, 2, 5);
-
-        // Cámara para tercera persona (modo 3)
         this.cameraTercera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
-
-        // Cámara para modo vehículo (modo 4)
         this.cameraVehicle = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
 
-        // Controles
         this.orbitControls = new OrbitControls(this.cameraPersp, domElement);
         this.orbitControls.enableDamping = true;
 
         this.pointerLockControlsFreeWalk = new PointerLockControls(this.cameraFreeWalk, domElement);
         this.pointerLockControlsVehicle = new PointerLockControls(this.cameraVehicle, domElement);
 
-        // Mapear tipos a cámaras y controles
+        // Movimiento WASD para FreeWalk
+        this.velocity = new THREE.Vector3();
+        this.direction = new THREE.Vector3();
+        this.moveForward = false;
+        this.moveBackward = false;
+        this.moveLeft = false;
+        this.moveRight = false;
+        this.freeWalkSpeed = 3; // Velocidad reducida para caminar
+        this.freeWalkRotationSpeed = 2.0; // Velocidad de rotación al girar
+
         this.cameras = {
             orbit: { camera: this.cameraPersp, controls: this.orbitControls },
             freeWalk: { camera: this.cameraFreeWalk, controls: this.pointerLockControlsFreeWalk },
-            terceraPersona: { camera: this.cameraTercera, controls: null }, // Sin controles manuales (sigue auto)
+            terceraPersona: { camera: this.cameraTercera, controls: null },
             vehicle: { camera: this.cameraVehicle, controls: this.pointerLockControlsVehicle }
         };
 
         this.currentType = 'orbit';
         this.activeCamera = this.cameras[this.currentType].camera;
 
-        // Inicializar controles
         this._setupControls();
 
-        // Eventos click para activar PointerLock cuando toca
         domElement.addEventListener('click', () => {
             if (this.currentType === 'freeWalk') this.pointerLockControlsFreeWalk.lock();
             if (this.currentType === 'vehicle') this.pointerLockControlsVehicle.lock();
         });
+
+        document.addEventListener('keydown', (event) => this._onKeyDown(event));
+        document.addEventListener('keyup', (event) => this._onKeyUp(event));
     }
 
     _setupControls() {
-        // Desconectar todos los pointerLocks para comenzar
         this.pointerLockControlsFreeWalk.disconnect();
         this.pointerLockControlsVehicle.disconnect();
-
-        // OrbitControls siempre conectados para orbit
         this.orbitControls.enabled = (this.currentType === 'orbit');
     }
 
     setCameraByType(type) {
         if (!(type in this.cameras)) return;
 
-        // Desconectar controles previos
         if (this.currentType === 'freeWalk') this.pointerLockControlsFreeWalk.disconnect();
         if (this.currentType === 'vehicle') this.pointerLockControlsVehicle.disconnect();
-
         if (this.currentType === 'orbit') this.orbitControls.enabled = false;
 
         this.currentType = type;
         this.activeCamera = this.cameras[type].camera;
 
-        // Activar controles nuevos
         if (type === 'orbit') {
             this.orbitControls.enabled = true;
         } else if (type === 'freeWalk') {
@@ -93,7 +89,7 @@ export class CameraManager {
         if (this.currentType === 'orbit') {
             this.orbitControls.update();
         } else if (this.currentType === 'freeWalk') {
-            // PointerLock actualiza automáticamente la cámara
+            this._updateFreeWalkMovement(deltaTime);
         } else if (this.currentType === 'terceraPersona' && auto) {
             this.updateTerceraPersonaCamera(auto.position, auto.quaternion);
         } else if (this.currentType === 'vehicle' && auto) {
@@ -114,10 +110,52 @@ export class CameraManager {
         offset.applyQuaternion(objectQuaternion);
         this.cameraVehicle.position.copy(objectPosition).add(offset);
         this.cameraVehicle.lookAt(objectPosition);
-
-        // Mover pointerLockControlsVehicle a la cámara actual
         this.pointerLockControlsVehicle.getObject().position.copy(this.cameraVehicle.position);
     }
+
+    _onKeyDown(event) {
+        switch (event.code) {
+            case 'ArrowUp':
+            case 'KeyW': this.moveForward = true; break;
+            case 'ArrowLeft':
+            case 'KeyA': this.moveLeft = true; break;
+            case 'ArrowDown':
+            case 'KeyS': this.moveBackward = true; break;
+            case 'ArrowRight':
+            case 'KeyD': this.moveRight = true; break;
+        }
+    }
+
+    _onKeyUp(event) {
+        switch (event.code) {
+            case 'ArrowUp':
+            case 'KeyW': this.moveForward = false; break;
+            case 'ArrowLeft':
+            case 'KeyA': this.moveLeft = false; break;
+            case 'ArrowDown':
+            case 'KeyS': this.moveBackward = false; break;
+            case 'ArrowRight':
+            case 'KeyD': this.moveRight = false; break;
+        }
+    }
+
+_updateFreeWalkMovement(deltaTime) {
+    if (!this.pointerLockControlsFreeWalk.isLocked) return;
+
+    this.direction.set(0, 0, 0);
+    if (this.moveForward) this.direction.z -= 1;
+    if (this.moveBackward) this.direction.z += 1;
+    if (this.moveLeft) this.direction.x -= 1;
+    if (this.moveRight) this.direction.x += 1;
+    this.direction.normalize();
+
+    const speed = this.freeWalkSpeed * deltaTime;
+    const move = new THREE.Vector3(this.direction.x * speed, 0, this.direction.z * speed);
+    
+    this.pointerLockControlsFreeWalk.moveRight(move.x);
+    this.pointerLockControlsFreeWalk.moveForward(-move.z); // CORREGIDO
+}
+
 
     onWindowResize(width, height) {
         const aspect = width / height;

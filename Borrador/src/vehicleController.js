@@ -8,7 +8,7 @@ export class VehicleController {
         this.maxSpeed = 0.9;
         this.acceleration = 5;
         this.deceleration = 7;
-        this.turnSpeed = THREE.MathUtils.degToRad(120); // grados por segundo
+        this.turnSpeed = THREE.MathUtils.degToRad(40); // grados por segundo
 
         this.currentSpeed = 0;
         this.keys = { w: false, a: false, s: false, d: false };
