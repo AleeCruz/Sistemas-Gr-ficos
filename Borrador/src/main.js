@@ -1,25 +1,23 @@
 // main.js
 import * as THREE from 'three';
-import { scene, camera, renderer, controls } from './scene.js'; // Importa elementos de tu scene.js
+import { scene, camera, renderer, controls } from './scene.js';
 import { catmullRomCurve } from './caminoCurva.js';
 import { generarObjetosSinSuperposicion } from './gridObjects.js';
-import { crearAuto } from './auto.js'; // (No usado actualmente, pero mantenido)
 import { moverCuboSobreCurva } from './movimientoSobreCurva.js';
 import { crearCurva } from "./curva.js";
 import { CameraManager } from './cameraManager.js';
+import { VehicleController } from './vehicleController.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-// Importa los nuevos módulos para el sol y el GUI
 import { setupLights, updateLightHelper } from './lightManager.js';
 import { setupGUI } from './guiManager.js';
-import { animateSun, getSunSettings } from './sunAnimation.js'; // Renombrado para claridad
+import { animateSun, getSunSettings } from './sunAnimation.js';
 
-// --- Inicialización de variables globales ---
 let auto, curvaPrincipal, clock;
-let cameraManager;
-let spotLight, ambientLight; // Variables para las luces controladas por los nuevos módulos
+let cameraManager, vehicleController;
+let spotLight, ambientLight;
 
-// --- Generar objetos del grid ---
+// --- Generar objetos en el grid ---
 generarObjetosSinSuperposicion({
     curve: catmullRomCurve,
     streetWidth: 0.5,
@@ -27,85 +25,121 @@ generarObjetosSinSuperposicion({
     gridDivision: 15,
 });
 
-// --- CURVA PRINCIPAL ---
-curvaPrincipal = crearCurva(); // Asumo que esta es la curva de tu carretera
+// --- Crear curva principal y mostrarla ---
+curvaPrincipal = crearCurva();
 const puntosCurva = curvaPrincipal.getPoints(200);
 const curvaGeometry = new THREE.BufferGeometry().setFromPoints(puntosCurva);
 scene.add(new THREE.Line(curvaGeometry, new THREE.LineBasicMaterial({ color: 0xff0000 })));
 
-// --- AUTO (GLB) ---
+// --- Cargar modelo del auto ---
 const loader = new GLTFLoader();
 loader.load('/modelos/car_model.glb', (gltf) => {
-    auto = gltf.scene;
-    auto.scale.set(0.001, 0.001, 0.001);
+    const model = gltf.scene;
+    model.scale.set(0.001, 0.001, 0.001);
+
+    // Crear contenedor lógico del auto
+    auto = new THREE.Group();
+    auto.add(model);
     scene.add(auto);
 
-    auto.userData.ruedas = []; // Asumo que las ruedas se añaden aquí, aunque no veo la lógica de añadir hijos específicos.
-    auto.traverse((child) => {
-        // Tu lógica existente para las ruedas o rotación.
-        // Asegúrate de que esta lógica maneje correctamente los Mesh específicos si son ruedas.
-        if (child.isMesh && child.name.includes('wheel')) { // Ejemplo: si el nombre de las ruedas contiene 'wheel'
-            auto.userData.ruedas.push(child);
+    // Guardar el modelo visual
+    auto.userData.model = model;
+
+    // Detectar ruedas
+    model.userData.ruedas = [];
+    model.traverse((child) => {
+        if (child.isMesh && child.name.toLowerCase().includes('wheel')) {
+            model.userData.ruedas.push(child);
         }
-        child.rotation.y = Math.PI / 2; // Esto rotaría todo el auto al cargarlo. Podrías necesitar ajustarlo.
     });
 
-}, undefined, (error) => {
-    console.error("Error al cargar el modelo GLB:", error);
+    auto.userData.ruedas = model.userData.ruedas;
+
+    // Crear controlador del vehículo
+    vehicleController = new VehicleController(auto);
 });
 
+// --- Inicializar sistema ---
 clock = new THREE.Clock();
-
-// --- CAMERA MANAGER ---
 cameraManager = new CameraManager(renderer.domElement, camera);
 
+// --- Manejo de teclas de cámara ---
 window.addEventListener('keydown', (e) => {
-    if (e.key.toLowerCase() === 'c') {
-        cameraManager.toggleCamera();
+    switch (e.key) {
+        case '1':
+            cameraManager.setCameraByType('orbit');
+            break;
+        case '2':
+            cameraManager.setCameraByType('freeWalk');
+            break;
+        case '3':
+            cameraManager.setCameraByType('terceraPersona');
+            break;
+        case '4':
+    cameraManager.setCameraByType('vehicle');
+
+    if (auto && curvaPrincipal) {
+        // Obtener el parámetro t actual del auto en la curva, o aproximarlo
+        // Si no tenés un parámetro 't' guardado, podés calcular el punto más cercano (aproximado)
+
+        // Suponiendo que usás elapsedTime para mover el auto sobre la curva:
+        const tiempo = clock.getElapsedTime() % 1; // o el método que uses para normalizar t en [0,1]
+
+        // Obtener tangente y posición de la curva en ese t
+        const posCurva = curvaPrincipal.getPointAt(tiempo);
+        const tangenteCurva = curvaPrincipal.getTangentAt(tiempo);
+
+        // Forzar posición del auto al punto de la curva
+        auto.position.copy(posCurva);
+
+        // Calcular la rotación para que el frente del auto apunte en la dirección de la tangente
+        const angle = Math.atan2(tangenteCurva.x, tangenteCurva.z);
+        auto.rotation.set(0, angle, 0);
+    }
+    break;
+
     }
 });
 
-// --- Configuración de Luces del Sol y Ambiente (usando el nuevo módulo) ---
-// Obtén las instancias de las luces del lightManager
+// --- Luces y GUI ---
 const lights = setupLights(scene);
 spotLight = lights.spotLight;
 ambientLight = lights.ambientLight;
-
-// --- Configuración del GUI (usando el nuevo módulo) ---
-// Pasamos las luces y la escena al GUI, junto con el objeto de configuración del sol
 setupGUI(spotLight, ambientLight, scene, getSunSettings());
 
-// --- ANIMACIÓN ---
+// --- Animación ---
 function animate() {
     requestAnimationFrame(animate);
-    const deltaTime = clock.getDelta(); // Usar deltaTime para movimientos más suaves
+    const deltaTime = clock.getDelta();
+    const camType = cameraManager.getActiveCameraType();
 
-    // Actualiza los controles de la cámara
-    controls.update();
+    // Movimiento automático del auto (solo si no es modo vehículo)
+    if (auto && curvaPrincipal && camType !== 'vehicle') {
+        moverCuboSobreCurva(auto, curvaPrincipal, clock.getElapsedTime());
+    }
 
-    // Mueve el auto sobre la curva
-    if (auto && curvaPrincipal) {
-        // Usar deltaTime para mover el auto en función del tiempo transcurrido, no el tiempo total
-        moverCuboSobreCurva(auto, curvaPrincipal, clock.getElapsedTime()); // Usar getElapsedTime si moverCuboSobreCurva depende del tiempo total
-        auto.userData.ruedas.forEach(rueda => {
-            rueda.rotation.y += 0.5 * deltaTime * 60; // Ajusta la velocidad de rotación con deltaTime
-        });
-
-        if (cameraManager.getActiveCameraType() === 'primeraPersona') {
-            cameraManager.updatePrimeraPersonaCamera(auto.position, auto.quaternion); // Pasar también la rotación del auto
+    // 🔄 Rotar visualmente el modelo del auto según la cámara
+    if (auto?.userData?.model) {
+        const model = auto.userData.model;
+        if (camType === 'orbit' || camType === 'freeWalk' || camType === 'terceraPersona') {
+            model.rotation.y = Math.PI / 2;
+        } else {
+            model.rotation.y = 0; // En modo vehículo
         }
     }
 
-    // Animar el sol y actualizar su helper
-    animateSun(spotLight, getSunSettings());
-    updateLightHelper(spotLight); // updateLightHelper necesita el spotLight directamente
+    // Actualizar cámara y vehículo
+    cameraManager.update(deltaTime, vehicleController, auto);
 
-    // Renderizar la escena con la cámara activa
+    // Sol y GUI
+    updateLightHelper(spotLight);
+    animateSun(spotLight, getSunSettings());
+
     renderer.render(scene, cameraManager.getActiveCamera());
 }
 animate();
 
-// --- RESIZE ---
+// --- Resize dinámico ---
 window.addEventListener('resize', () => {
     cameraManager.onWindowResize(window.innerWidth, window.innerHeight);
     renderer.setSize(window.innerWidth, window.innerHeight);

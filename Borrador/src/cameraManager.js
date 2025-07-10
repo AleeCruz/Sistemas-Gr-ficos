@@ -1,81 +1,84 @@
 // cameraManager.js
-
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
 
 export class CameraManager {
     constructor(domElement, initialCamera) {
-        const width = window.innerWidth;
-        const height = window.innerHeight;
-        const aspect = width / height;
+        const aspect = window.innerWidth / window.innerHeight;
 
-        this.cameraPersp = initialCamera; // Reutilizamos la cámara de scene.js como la perspectiva principal
-        
-        this.cameraOrtho = new THREE.OrthographicCamera(
-            (aspect * 10) / -2,
-            (aspect * 10) / 2,
-            10 / 2,
-            -10 / 2,
-            0.1,
-            1000
-        );
-        this.cameraOrtho.position.set(10, 10, 10);
+        // Cámara perspectiva para modo 1 (OrbitControls)
+        this.cameraPersp = initialCamera; 
 
-        this.cameraPrimera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
-        this.cameraPrimera.position.set(0, 0.23, 0); // Posición inicial, será actualizada por el objeto en movimiento
+        // Cámara perspectiva para modo 2 (Free walk) con PointerLock
+        this.cameraFreeWalk = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
+        this.cameraFreeWalk.position.set(0, 2, 5);
 
+        // Cámara para tercera persona (modo 3)
+        this.cameraTercera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
+
+        // Cámara para modo vehículo (modo 4)
+        this.cameraVehicle = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
+
+        // Controles
         this.orbitControls = new OrbitControls(this.cameraPersp, domElement);
-        this.orbitControls.enableDamping = true; // Mantén tu configuración existente de OrbitControls
+        this.orbitControls.enableDamping = true;
 
-        this.pointerControls = new PointerLockControls(this.cameraPrimera, domElement);
+        this.pointerLockControlsFreeWalk = new PointerLockControls(this.cameraFreeWalk, domElement);
+        this.pointerLockControlsVehicle = new PointerLockControls(this.cameraVehicle, domElement);
 
-        this.cameras = [
-            { camera: this.cameraPersp, type: 'perspectiva', controls: this.orbitControls },
-            { camera: this.cameraOrtho, type: 'ortografica', controls: this.orbitControls },
-            { camera: this.cameraPrimera, type: 'primeraPersona', controls: this.pointerControls }
-        ];
-        this.currentCameraIndex = 0; // Empieza con la cámara de perspectiva por defecto
-        this.activeCamera = this.cameras[this.currentCameraIndex].camera;
+        // Mapear tipos a cámaras y controles
+        this.cameras = {
+            orbit: { camera: this.cameraPersp, controls: this.orbitControls },
+            freeWalk: { camera: this.cameraFreeWalk, controls: this.pointerLockControlsFreeWalk },
+            terceraPersona: { camera: this.cameraTercera, controls: null }, // Sin controles manuales (sigue auto)
+            vehicle: { camera: this.cameraVehicle, controls: this.pointerLockControlsVehicle }
+        };
 
-        this._setupInitialControls();
+        this.currentType = 'orbit';
+        this.activeCamera = this.cameras[this.currentType].camera;
 
-        // Manejo de eventos de click para activar PointerLockControls
+        // Inicializar controles
+        this._setupControls();
+
+        // Eventos click para activar PointerLock cuando toca
         domElement.addEventListener('click', () => {
-            if (this.getActiveCameraType() === 'primeraPersona') {
-                this.enablePointerLock();
-            }
+            if (this.currentType === 'freeWalk') this.pointerLockControlsFreeWalk.lock();
+            if (this.currentType === 'vehicle') this.pointerLockControlsVehicle.lock();
         });
     }
 
-    _setupInitialControls() {
-        // Desconectar pointerControls al inicio si la cámara inicial no es primera persona
-        if (this.cameras[this.currentCameraIndex].type !== 'primeraPersona') {
-            this.pointerControls.disconnect();
-        }
+    _setupControls() {
+        // Desconectar todos los pointerLocks para comenzar
+        this.pointerLockControlsFreeWalk.disconnect();
+        this.pointerLockControlsVehicle.disconnect();
+
+        // OrbitControls siempre conectados para orbit
+        this.orbitControls.enabled = (this.currentType === 'orbit');
     }
 
-    toggleCamera() {
-        // Desconectar controles de la cámara actual antes de cambiar
-        const prevCameraInfo = this.cameras[this.currentCameraIndex];
-        if (prevCameraInfo.type === 'primeraPersona') {
-            this.pointerControls.unlock(); // Desbloquea el puntero antes de cambiar
-            this.pointerControls.disconnect();
-        } else {
-            this.orbitControls.enabled = false;
-        }
+    setCameraByType(type) {
+        if (!(type in this.cameras)) return;
 
-        this.currentCameraIndex = (this.currentCameraIndex + 1) % this.cameras.length;
-        const newCameraInfo = this.cameras[this.currentCameraIndex];
-        this.activeCamera = newCameraInfo.camera;
+        // Desconectar controles previos
+        if (this.currentType === 'freeWalk') this.pointerLockControlsFreeWalk.disconnect();
+        if (this.currentType === 'vehicle') this.pointerLockControlsVehicle.disconnect();
 
-        // Conectar y habilitar controles para la nueva cámara
-        if (newCameraInfo.type === 'primeraPersona') {
-            this.pointerControls.connect();
-        } else {
-            this.orbitControls.object = this.activeCamera;
+        if (this.currentType === 'orbit') this.orbitControls.enabled = false;
+
+        this.currentType = type;
+        this.activeCamera = this.cameras[type].camera;
+
+        // Activar controles nuevos
+        if (type === 'orbit') {
             this.orbitControls.enabled = true;
+        } else if (type === 'freeWalk') {
+            this.pointerLockControlsFreeWalk.connect();
+        } else if (type === 'vehicle') {
+            this.pointerLockControlsVehicle.connect();
         }
+
+        console.log(`Cámara cambiada a: ${type}`);
     }
 
     getActiveCamera() {
@@ -83,41 +86,45 @@ export class CameraManager {
     }
 
     getActiveCameraType() {
-        return this.cameras[this.currentCameraIndex].type;
+        return this.currentType;
     }
 
-    enablePointerLock() {
-        if (this.getActiveCameraType() === 'primeraPersona') {
-            this.pointerControls.lock();
-        }
-    }
-
-    updatePrimeraPersonaCamera(objectPosition) {
-        const offsetAltura = new THREE.Vector3(0, 0.23, 0); // Ajuste para la altura de la cámara
-        this.cameraPrimera.position.copy(objectPosition).add(offsetAltura);
-    }
-
-    updateControls() {
-        // Solo actualizamos OrbitControls, PointerLockControls se actualiza internamente
-        if (this.orbitControls.enabled) {
+    update(deltaTime, vehicleController, auto) {
+        if (this.currentType === 'orbit') {
             this.orbitControls.update();
+        } else if (this.currentType === 'freeWalk') {
+            // PointerLock actualiza automáticamente la cámara
+        } else if (this.currentType === 'terceraPersona' && auto) {
+            this.updateTerceraPersonaCamera(auto.position, auto.quaternion);
+        } else if (this.currentType === 'vehicle' && auto) {
+            this.updateCamaraDetrasAuto(auto.position, auto.quaternion);
+            if (vehicleController) vehicleController.update(deltaTime);
         }
+    }
+
+    updateTerceraPersonaCamera(objectPosition, objectQuaternion) {
+        const offset = new THREE.Vector3(-1, 1, 0);
+        offset.applyQuaternion(objectQuaternion);
+        this.cameraTercera.position.copy(objectPosition).add(offset);
+        this.cameraTercera.lookAt(objectPosition);
+    }
+
+    updateCamaraDetrasAuto(objectPosition, objectQuaternion) {
+        const offset = new THREE.Vector3(0, 0.5, -1);
+        offset.applyQuaternion(objectQuaternion);
+        this.cameraVehicle.position.copy(objectPosition).add(offset);
+        this.cameraVehicle.lookAt(objectPosition);
+
+        // Mover pointerLockControlsVehicle a la cámara actual
+        this.pointerLockControlsVehicle.getObject().position.copy(this.cameraVehicle.position);
     }
 
     onWindowResize(width, height) {
         const aspect = width / height;
-
-        // Actualizar cámaras de perspectiva
-        this.cameraPersp.aspect = aspect;
-        this.cameraPersp.updateProjectionMatrix();
-        this.cameraPrimera.aspect = aspect;
-        this.cameraPrimera.updateProjectionMatrix();
-
-        // Actualizar cámara ortográfica
-        this.cameraOrtho.left = (aspect * 10) / -2;
-        this.cameraOrtho.right = (aspect * 10) / 2;
-        this.cameraOrtho.top = 10 / 2;
-        this.cameraOrtho.bottom = -10 / 2;
-        this.cameraOrtho.updateProjectionMatrix();
+        for (const camKey in this.cameras) {
+            const cam = this.cameras[camKey].camera;
+            cam.aspect = aspect;
+            cam.updateProjectionMatrix();
+        }
     }
 }
